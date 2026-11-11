@@ -1,0 +1,365 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="سوريا عقارات - منصتك الذكية للبيع والشراء والإيجار والاستثمار العقاري في سوريا.">
+  <meta name="theme-color" content="#102b2a">
+  <title>سوريا عقارات | المنصة العقارية الذكية</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <a class="brand" href="#home">
+      <span class="brand-icon">س</span>
+      <span>
+        <strong>سوريا عقارات</strong>
+        <small>منصتك العقارية الذكية</small>
+      </span>
+    </a>
+
+    <button class="menu-toggle" id="menuToggle" aria-label="فتح القائمة">☰</button>
+
+    <nav class="main-nav" id="mainNav">
+      <a href="#home">الرئيسية</a>
+      <a href="#properties">العقارات</a>
+      <a href="#services">خدماتنا</a>
+      <a href="#ai-assistant">المساعد الذكي</a>
+      <a href="#video-studio">استديو الفيديو</a>
+    </nav>
+
+    <div class="header-actions">
+      <a class="btn btn-outline" href="#login">تسجيل الدخول</a>
+      <a class="btn btn-primary" href="#add-property">أضف عقارك</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="hero-content">
+        <span class="eyebrow">بوابتك إلى السوق العقاري السوري</span>
+        <h1>اعثر على عقارك القادم<br><span>بذكاء وثقة</span></h1>
+        <p>
+          منصة سورية متكاملة للبيع والشراء والإيجار والاستثمار،
+          تجمع المالكين والمشترين والمستأجرين والمكاتب العقارية في مكان واحد.
+        </p>
+        <div class="hero-actions">
+          <a href="#properties" class="btn btn-primary">اكتشف العقارات</a>
+          <a href="#add-property" class="btn btn-light">اعرض عقارك الآن</a>
+        </div>
+      </div>
+
+      <div class="hero-card">
+        <div class="hero-card-top">
+          <span>اكتشف فرصتك العقارية</span>
+          <span class="live-dot">● متاح الآن</span>
+        </div>
+        <div class="hero-symbol">⌂</div>
+        <h2>من دمشق إلى جميع المحافظات</h2>
+        <p>بيع • شراء • إيجار • استثمار</p>
+      </div>
+    </section>
+
+    <section class="search-section" aria-label="البحث عن عقار">
+      <div class="section-heading">
+        <span class="eyebrow">بحث سريع</span>
+        <h2>ما العقار الذي تبحث عنه؟</h2>
+      </div>
+
+      <form id="searchForm" class="search-form">
+        <div class="field">
+          <label for="purpose">نوع العملية</label>
+          <select id="purpose">
+            <option value="">جميع العمليات</option>
+            <option value="بيع">للبيع</option>
+            <option value="إيجار">للإيجار</option>
+            <option value="استثمار">للاستثمار</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="propertyType">نوع العقار</label>
+          <select id="propertyType">
+            <option value="">جميع الأنواع</option>
+            <option value="شقة">شقة</option>
+            <option value="منزل">منزل</option>
+            <option value="فيلا">فيلا</option>
+            <option value="أرض">أرض</option>
+            <option value="محل تجاري">محل تجاري</option>
+            <option value="مكتب">مكتب</option>
+            <option value="مستودع">مستودع</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="city">المحافظة</label>
+          <select id="city">
+            <option value="">كل المحافظات</option>
+            <option>دمشق</option>
+            <option>ريف دمشق</option>
+            <option>حلب</option>
+            <option>حمص</option>
+            <option>حماة</option>
+            <option>اللاذقية</option>
+            <option>طرطوس</option>
+            <option>إدلب</option>
+            <option>درعا</option>
+            <option>السويداء</option>
+            <option>القنيطرة</option>
+            <option>دير الزور</option>
+            <option>الرقة</option>
+            <option>الحسكة</option>
+          </select>
+        </div>
+
+        <button class="btn btn-primary search-button" type="submit">ابحث عن عقار</button>
+      </form>
+    </section>
+
+    <section class="section" id="properties">
+      <div class="section-heading section-heading-row">
+        <div>
+          <span class="eyebrow">فرص عقارية</span>
+          <h2>اكتشف العقارات</h2>
+          <p>تصفح العقارات المعروضة في السوق السوري.</p>
+        </div>
+        <a href="#add-property" class="text-link">أضف إعلانك ←</a>
+      </div>
+
+      <div class="property-grid" id="propertyGrid">
+        <article class="property-card">
+          <div class="property-image property-image-one">
+            <span class="property-badge">للبيع</span>
+            <span class="property-type-label">شقة سكنية</span>
+          </div>
+          <div class="property-info">
+            <h3>شقة سكنية</h3>
+            <p>دمشق — أضف تفاصيل العقار عند توفرها</p>
+            <div class="property-meta">
+              <span>🏠 شقة</span>
+              <span>📍 دمشق</span>
+            </div>
+            <p class="property-price">السعر عند الاستفسار</p>
+            <button class="btn btn-outline property-contact" type="button">استفسر عن العقار</button>
+          </div>
+        </article>
+
+        <article class="property-card">
+          <div class="property-image property-image-two">
+            <span class="property-badge">للإيجار</span>
+            <span class="property-type-label">عقار تجاري</span>
+          </div>
+          <div class="property-info">
+            <h3>مساحة تجارية</h3>
+            <p>ريف دمشق — أضف تفاصيل العقار عند توفرها</p>
+            <div class="property-meta">
+              <span>🏢 تجاري</span>
+              <span>📍 ريف دمشق</span>
+            </div>
+            <p class="property-price">السعر عند الاستفسار</p>
+            <button class="btn btn-outline property-contact" type="button">استفسر عن العقار</button>
+          </div>
+        </article>
+
+        <article class="property-card">
+          <div class="property-image property-image-three">
+            <span class="property-badge">استثمار</span>
+            <span class="property-type-label">أرض</span>
+          </div>
+          <div class="property-info">
+            <h3>فرصة استثمار عقاري</h3>
+            <p>سوريا — أضف تفاصيل العقار عند توفرها</p>
+            <div class="property-meta">
+              <span>🌳 أرض</span>
+              <span>📍 سوريا</span>
+            </div>
+            <p class="property-price">السعر عند الاستفسار</p>
+            <button class="btn btn-outline property-contact" type="button">استفسر عن العقار</button>
+          </div>
+        </article>
+      </div>
+      <p class="notice">العقارات الظاهرة هنا نماذج تصميمية وليست عروضاً حقيقية أو متاحة للبيع.</p>
+    </section>
+
+    <section class="services-section" id="services">
+      <div class="section-heading">
+        <span class="eyebrow">كل ما تحتاجه</span>
+        <h2>خدمات عقارية متكاملة</h2>
+        <p>حلول تجمع أطراف السوق العقاري السوري.</p>
+      </div>
+
+      <div class="services-grid">
+        <article class="service-card">
+          <span class="service-icon">⌂</span>
+          <h3>بيع وشراء</h3>
+          <p>اعرض عقارك وابحث عن العقار المناسب لك.</p>
+        </article>
+        <article class="service-card">
+          <span class="service-icon">🔑</span>
+          <h3>الإيجارات</h3>
+          <p>خيارات سكنية وتجارية للمؤجرين والمستأجرين.</p>
+        </article>
+        <article class="service-card">
+          <span class="service-icon">🏢</span>
+          <h3>المكاتب العقارية</h3>
+          <p>مساحة مخصصة للمكاتب والوسطاء العقاريين.</p>
+        </article>
+        <article class="service-card">
+          <span class="service-icon">📈</span>
+          <h3>الاستثمار العقاري</h3>
+          <p>استعرض الفرص والمشاريع العقارية.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="ai-section" id="ai-assistant">
+      <div class="ai-content">
+        <span class="eyebrow">تقنيات الذكاء الاصطناعي</span>
+        <h2>تعرّف على مساعدك العقاري الذكي</h2>
+        <p>
+          اكتب وصفاً بسيطاً لعقارك، وسيساعدك المساعد على إعداد إعلان منظم
+          وتحديد المعلومات الناقصة قبل تقديمه للمراجعة.
+        </p>
+        <a class="btn btn-primary" href="#ai-tool">جرّب المساعد الذكي</a>
+      </div>
+
+      <div class="ai-tool" id="ai-tool">
+        <h3>مساعد سوريا عقارات</h3>
+        <label for="aiDescription">صف العقار أو طلبك العقاري</label>
+        <textarea id="aiDescription" rows="5" placeholder="مثلاً: شقة للبيع في دمشق، غرفتان وصالون..."></textarea>
+        <button class="btn btn-primary" id="aiPrepareButton" type="button">جهّز وصف الإعلان</button>
+        <div id="aiResult" class="ai-result" aria-live="polite">
+          سيظهر هنا تنظيم أولي لوصفك.
+        </div>
+        <small>هذه نسخة أولية لتنظيم النص محلياً، وليست اتصالاً فعلياً بخدمة ذكاء اصطناعي.</small>
+      </div>
+    </section>
+
+    <section class="video-section" id="video-studio">
+      <div class="section-heading">
+        <span class="eyebrow">التسويق العقاري الحديث</span>
+        <h2>استديو سوريا عقارات</h2>
+        <p>مساحة مستقبلية لتحويل صور العقارات إلى مواد تسويقية وفيديوهات احترافية.</p>
+      </div>
+
+      <div class="studio-panel">
+        <div class="studio-icon">▶</div>
+        <h3>اصنع فيديو تسويقياً لعقارك</h3>
+        <p>ستتمكن من رفع الصور وإضافة التفاصيل واختيار قالب الفيديو عند تفعيل الاستديو.</p>
+        <a class="btn btn-light" href="#add-property">ابدأ بإضافة عقارك</a>
+        <small>إنشاء الفيديو الفعلي يحتاج إلى ربط خدمة معالجة فيديو.</small>
+      </div>
+    </section>
+
+    <section class="add-section" id="add-property">
+      <div class="section-heading">
+        <span class="eyebrow">أضف إعلانك</span>
+        <h2>اعرض عقارك على سوريا عقارات</h2>
+        <p>املأ المعلومات الأساسية لتجهيز طلب إعلانك.</p>
+      </div>
+
+      <form id="propertyForm" class="property-form">
+        <div class="form-grid">
+          <div class="field">
+            <label for="listingTitle">عنوان الإعلان</label>
+            <input id="listingTitle" required maxlength="120" placeholder="مثلاً: شقة للبيع في دمشق">
+          </div>
+          <div class="field">
+            <label for="listingPurpose">نوع العملية</label>
+            <select id="listingPurpose" required>
+              <option value="">اختر</option>
+              <option>بيع</option>
+              <option>إيجار</option>
+              <option>استثمار</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="listingType">نوع العقار</label>
+            <select id="listingType" required>
+              <option value="">اختر</option>
+              <option>شقة</option>
+              <option>منزل</option>
+              <option>فيلا</option>
+              <option>أرض</option>
+              <option>محل تجاري</option>
+              <option>مكتب</option>
+              <option>مستودع</option>
+              <option>عقار آخر</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="listingCity">المحافظة</label>
+            <select id="listingCity" required>
+              <option value="">اختر المحافظة</option>
+              <option>دمشق</option>
+              <option>ريف دمشق</option>
+              <option>حلب</option>
+              <option>حمص</option>
+              <option>حماة</option>
+              <option>اللاذقية</option>
+              <option>طرطوس</option>
+              <option>إدلب</option>
+              <option>درعا</option>
+              <option>السويداء</option>
+              <option>القنيطرة</option>
+              <option>دير الزور</option>
+              <option>الرقة</option>
+              <option>الحسكة</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="listingPrice">السعر (اختياري)</label>
+            <input id="listingPrice" inputmode="decimal" placeholder="أدخل السعر إن رغبت">
+          </div>
+          <div class="field">
+            <label for="listingPhone">رقم التواصل</label>
+            <input id="listingPhone" type="tel" required placeholder="رقم الهاتف">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="listingDetails">تفاصيل العقار</label>
+          <textarea id="listingDetails" rows="5" required placeholder="المساحة، عدد الغرف، المنطقة، الطابق، والمواصفات..."></textarea>
+        </div>
+
+        <div class="field">
+          <label for="listingMedia">صور العقار أو الفيديو</label>
+          <input id="listingMedia" type="file" accept="image/*,video/*" multiple>
+          <small>اختيار الملفات هنا واجهة أولية؛ رفعها وتخزينها يحتاج إلى ربط خدمة تخزين.</small>
+        </div>
+
+        <button class="btn btn-primary" type="submit">إرسال الإعلان للمراجعة</button>
+        <p id="formMessage" class="form-message" aria-live="polite"></p>
+        <small>لن يظهر الإعلان للعامة قبل مراجعة الإدارة والموافقة عليه.</small>
+      </form>
+    </section>
+
+    <section class="login-section" id="login">
+      <div>
+        <span class="eyebrow">حسابك العقاري</span>
+        <h2>انضم إلى مجتمع سوريا عقارات</h2>
+        <p>مساحة موحدة للمالكين والمشترين والمستأجرين والمكاتب والمطورين.</p>
+      </div>
+      <a class="btn btn-primary" href="#add-property">ابدأ بإضافة إعلان</a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-brand">
+      <strong>سوريا عقارات</strong>
+      <p>منصة عقارية ذكية لخدمة السوق السوري.</p>
+    </div>
+    <div class="footer-links">
+      <a href="#home">الرئيسية</a>
+      <a href="#properties">العقارات</a>
+      <a href="#services">الخدمات</a>
+      <a href="#add-property">أضف عقارك</a>
+    </div>
+    <p class="copyright">© <span id="currentYear"></span> سوريا عقارات. جميع الحقوق محفوظة.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
