@@ -1,56 +1,111 @@
-
-/* سوريا عقارات - ربط Supabase */
-(function () {
+/* سوريا عقارات — ربط Supabase المتوافق مع backend/database.sql */
+(() => {
   "use strict";
 
   const SUPABASE_URL = "https://nmhizdassdyhrccvpvqy.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_yxvweCkQLtPMiFWnkxzA-w_MUyRiKcv";
-  const BUCKET = "property-media";
+  const SUPABASE_ANON_KEY = "sb_publishable_yxvweCkQLtPMiFWnkxzA-w_MUyRiKcv";
+  const STORAGE_BUCKET = "property-media";
+  const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
-  const statusMessage = (text, error = false) => {
-    const el = document.getElementById("formMessage");
-    if (el) {
-      el.textContent = text;
-      el.style.color = error ? "#b42318" : "#16794b";
-    }
+  const $ = (id) => document.getElementById(id);
+
+  const html = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[c]);
+
+  const purposeMap = {
+    "بيع": "sale",
+    "إيجار": "rent",
+    "استثمار": "investment",
+    sale: "sale",
+    rent: "rent",
+    investment: "investment"
   };
 
-  function loadSupabase() {
+  const typeMap = {
+    "شقة": "apartment",
+    "منزل": "house",
+    "فيلا": "villa",
+    "أرض": "land",
+    "محل تجاري": "commercial",
+    "مكتب": "office",
+    "مستودع": "warehouse",
+    "عقار آخر": "other",
+    apartment: "apartment",
+    house: "house",
+    villa: "villa",
+    land: "land",
+    commercial: "commercial",
+    office: "office",
+    warehouse: "warehouse",
+    other: "other"
+  };
+
+  const purposeLabel = {
+    sale: "للبيع",
+    rent: "للإيجار",
+    investment: "استثمار"
+  };
+
+  const typeLabel = {
+    apartment: "شقة",
+    house: "منزل",
+    villa: "فيلا",
+    land: "أرض",
+    commercial: "محل تجاري",
+    office: "مكتب",
+    warehouse: "مستودع",
+    other: "عقار آخر"
+  };
+
+  function message(id, text, isError = false) {
+    const el = $(id);
+    if (!el) return;
+
+    el.textContent = text;
+    el.style.color = isError ? "#b42318" : "#16794b";
+  }
+
+  function loadSupabaseLibrary() {
     return new Promise((resolve, reject) => {
       if (window.supabase?.createClient) {
-        resolve(window.supabase);
-        return;
+        return resolve(window.supabase);
       }
 
       const script = document.createElement("script");
       script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+
       script.onload = () => {
-        if (window.supabase?.createClient) resolve(window.supabase);
-        else reject(new Error("تعذر تحميل مكتبة Supabase"));
+        window.supabase?.createClient
+          ? resolve(window.supabase)
+          : reject(new Error("لم يتم تحميل مكتبة Supabase."));
       };
-      script.onerror = () => reject(new Error("تعذر الاتصال بمكتبة Supabase"));
+
+      script.onerror = () => {
+        reject(new Error("تعذر تحميل مكتبة Supabase. تحقق من اتصال الإنترنت."));
+      };
+
       document.head.appendChild(script);
     });
   }
 
-  function escapeHTML(value) {
-    return String(value ?? "").replace(/[&<>"']/g, char => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;"
-    })[char]);
-  }
+  async function main() {
+    const supabaseLib = await loadSupabaseLibrary();
 
-  async function start() {
-    const library = await loadSupabase();
-    const db = library.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const db = supabaseLib.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
 
     let currentUser = null;
 
-    /* إضافة واجهة الحساب */
-    const loginSection = document.getElementById("login");
+    // واجهة تسجيل الحساب
+    const loginSection = $("login");
+
     if (loginSection) {
       loginSection.innerHTML = `
         <div>
@@ -58,291 +113,635 @@
           <h2>حسابك على سوريا عقارات</h2>
           <p>سجّل الدخول لإضافة إعلاناتك ومتابعة طلباتك.</p>
         </div>
-        <div style="max-width:420px;width:100%">
-          <input id="accountName" placeholder="الاسم الكامل" style="width:100%;margin:6px 0;padding:12px">
-          <input id="accountEmail" type="email" placeholder="البريد الإلكتروني" required style="width:100%;margin:6px 0;padding:12px">
-          <input id="accountPassword" type="password" placeholder="كلمة المرور" required style="width:100%;margin:6px 0;padding:12px">
+
+        <div style="max-width:430px;width:100%">
+          <input
+            id="accountName"
+            type="text"
+            autocomplete="name"
+            placeholder="الاسم الكامل"
+            style="width:100%;margin:6px 0;padding:12px"
+          >
+
+          <input
+            id="accountEmail"
+            type="email"
+            autocomplete="email"
+            placeholder="البريد الإلكتروني"
+            style="width:100%;margin:6px 0;padding:12px"
+          >
+
+          <input
+            id="accountPassword"
+            type="password"
+            autocomplete="current-password"
+            placeholder="كلمة المرور (6 أحرف على الأقل)"
+            style="width:100%;margin:6px 0;padding:12px"
+          >
+
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-            <button class="btn btn-primary" id="signInButton" type="button">تسجيل الدخول</button>
-            <button class="btn btn-outline" id="signUpButton" type="button">إنشاء حساب</button>
-            <button class="btn btn-outline" id="signOutButton" type="button" hidden>خروج</button>
+            <button class="btn btn-primary" id="signInButton" type="button">
+              تسجيل الدخول
+            </button>
+
+            <button class="btn btn-outline" id="signUpButton" type="button">
+              إنشاء حساب
+            </button>
+
+            <button
+              class="btn btn-outline"
+              id="signOutButton"
+              type="button"
+              hidden
+            >
+              تسجيل الخروج
+            </button>
           </div>
+
           <p id="accountMessage" aria-live="polite"></p>
-        </div>`;
+        </div>
+      `;
     }
 
-    const accountMessage = text => {
-      const el = document.getElementById("accountMessage");
-      if (el) el.textContent = text;
-    };
+    function renderAccount() {
+      if ($("signInButton")) {
+        $("signInButton").hidden = !!currentUser;
+      }
 
-    function updateAccountUI() {
-      const signedIn = !!currentUser;
-      const signIn = document.getElementById("signInButton");
-      const signUp = document.getElementById("signUpButton");
-      const signOut = document.getElementById("signOutButton");
+      if ($("signUpButton")) {
+        $("signUpButton").hidden = !!currentUser;
+      }
 
-      if (signIn) signIn.hidden = signedIn;
-      if (signUp) signUp.hidden = signedIn;
-      if (signOut) signOut.hidden = !signedIn;
+      if ($("signOutButton")) {
+        $("signOutButton").hidden = !currentUser;
+      }
 
-      accountMessage(signedIn
-        ? "تم تسجيل الدخول: " + currentUser.email
-        : "يمكنك تسجيل الدخول أو إنشاء حساب جديد.");
+      message(
+        "accountMessage",
+        currentUser
+          ? `تم تسجيل الدخول: ${currentUser.email || ""}`
+          : "يمكنك تسجيل الدخول أو إنشاء حساب جديد."
+      );
     }
 
     async function refreshUser() {
       const { data, error } = await db.auth.getUser();
-      if (error) console.warn(error.message);
+
+      if (error) {
+        console.warn("auth.getUser:", error.message);
+      }
+
       currentUser = data?.user || null;
-      updateAccountUI();
+      renderAccount();
     }
 
-    document.getElementById("signUpButton")?.addEventListener("click", async () => {
-      const email = document.getElementById("accountEmail").value.trim();
-      const password = document.getElementById("accountPassword").value;
-      const name = document.getElementById("accountName").value.trim();
+    // إنشاء حساب جديد
+    $("signUpButton")?.addEventListener("click", async () => {
+      const email = $("accountEmail")?.value.trim();
+      const password = $("accountPassword")?.value || "";
+      const fullName = $("accountName")?.value.trim() || "";
 
       if (!email || password.length < 6) {
-        accountMessage("أدخل البريد وكلمة مرور من 6 أحرف على الأقل.");
+        message(
+          "accountMessage",
+          "أدخل البريد الإلكتروني وكلمة مرور من 6 أحرف على الأقل.",
+          true
+        );
         return;
       }
 
-      accountMessage("جارٍ إنشاء الحساب...");
+      message("accountMessage", "جارٍ إنشاء الحساب...");
+
       const { data, error } = await db.auth.signUp({
         email,
         password,
-        options: { data: { full_name: name } }
+        options: {
+          data: {
+            full_name: fullName
+          }
+        }
       });
 
-      if (error) return accountMessage("تعذر إنشاء الحساب: " + error.message);
-
-      if (data.session) {
-        currentUser = data.user;
-        updateAccountUI();
-        accountMessage("تم إنشاء الحساب وتسجيل الدخول.");
-      } else {
-        accountMessage("تم إنشاء الحساب. تحقق من بريدك الإلكتروني إذا طُلب تأكيده، ثم سجّل الدخول.");
-      }
-    });
-
-    document.getElementById("signInButton")?.addEventListener("click", async () => {
-      const email = document.getElementById("accountEmail").value.trim();
-      const password = document.getElementById("accountPassword").value;
-
-      accountMessage("جارٍ تسجيل الدخول...");
-      const { data, error } = await db.auth.signInWithPassword({ email, password });
-
-      if (error) return accountMessage("تعذر تسجيل الدخول: " + error.message);
-
-      currentUser = data.user;
-      updateAccountUI();
-      await loadProperties();
-    });
-
-    document.getElementById("signOutButton")?.addEventListener("click", async () => {
-      const { error } = await db.auth.signOut();
-      if (error) return accountMessage("تعذر تسجيل الخروج: " + error.message);
-      currentUser = null;
-      updateAccountUI();
-      accountMessage("تم تسجيل الخروج.");
-    });
-
-    /* عرض العقارات التي وافقت عليها الإدارة فقط */
-    function renderProperties(rows) {
-      const grid = document.getElementById("propertyGrid");
-      if (!grid) return;
-
-      if (!rows.length) {
-        grid.innerHTML = "<p>لا توجد عقارات معتمدة حالياً. كن أول من يضيف عقاره.</p>";
+      if (error) {
+        message(
+          "accountMessage",
+          "تعذر إنشاء الحساب: " + error.message,
+          true
+        );
         return;
       }
 
-      grid.innerHTML = rows.map(item => {
-        const images = Array.isArray(item.images) ? item.images : [];
-        const image = images[0] || "";
-        const imageHTML = image
-          ? `<img src="${escapeHTML(image)}" alt="صورة العقار" style="width:100%;height:210px;object-fit:cover">`
-          : `<div class="property-image">⌂</div>`;
+      if (data.session && data.user) {
+        currentUser = data.user;
+        renderAccount();
 
-        const purpose = item.deal_type || "عقار";
-        const price = item.price
-          ? `${escapeHTML(item.price)} ${escapeHTML(item.currency || "")}`
-          : "السعر عند الاستفسار";
+        message(
+          "accountMessage",
+          "تم إنشاء الحساب وتسجيل الدخول."
+        );
+      } else {
+        message(
+          "accountMessage",
+          "تم إنشاء الحساب. تحقق من بريدك الإلكتروني إذا كان تأكيد البريد مفعّلاً، ثم سجّل الدخول."
+        );
+      }
+    });
+
+    // تسجيل الدخول
+    $("signInButton")?.addEventListener("click", async () => {
+      const email = $("accountEmail")?.value.trim();
+      const password = $("accountPassword")?.value || "";
+
+      if (!email || !password) {
+        message(
+          "accountMessage",
+          "أدخل البريد الإلكتروني وكلمة المرور.",
+          true
+        );
+        return;
+      }
+
+      message("accountMessage", "جارٍ تسجيل الدخول...");
+
+      const { data, error } = await db.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        message(
+          "accountMessage",
+          "تعذر تسجيل الدخول: " + error.message,
+          true
+        );
+        return;
+      }
+
+      currentUser = data.user;
+      renderAccount();
+
+      await loadProperties();
+    });
+
+    // تسجيل الخروج
+    $("signOutButton")?.addEventListener("click", async () => {
+      const { error } = await db.auth.signOut();
+
+      if (error) {
+        message(
+          "accountMessage",
+          "تعذر تسجيل الخروج: " + error.message,
+          true
+        );
+        return;
+      }
+
+      currentUser = null;
+      renderAccount();
+
+      await loadProperties();
+    });
+
+    const propertySelect =
+      "*, property_media(id, media_type, file_url, display_order)";
+
+    // عرض العقارات
+    function renderProperties(properties) {
+      const grid = $("propertyGrid");
+
+      if (!grid) return;
+
+      if (!properties.length) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <h3>لا توجد عقارات معتمدة حالياً</h3>
+            <p>
+              يمكنك إضافة عقارك، وسيظهر بعد مراجعة الإدارة والموافقة عليه.
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = properties.map((p) => {
+        const media = [...(p.property_media || [])].sort(
+          (a, b) => a.display_order - b.display_order
+        );
+
+        const image = media.find(
+          (m) => m.media_type === "image"
+        );
+
+        const video = media.find(
+          (m) => m.media_type === "video"
+        );
+
+        let visual = `
+          <div class="property-placeholder" aria-label="لا توجد صورة">
+            ⌂
+          </div>
+        `;
+
+        if (image) {
+          visual = `
+            <img
+              src="${html(image.file_url)}"
+              alt="${html(p.title)}"
+              loading="lazy"
+              style="width:100%;height:220px;object-fit:cover"
+            >
+          `;
+        } else if (video) {
+          visual = `
+            <video
+              src="${html(video.file_url)}"
+              controls
+              preload="metadata"
+              style="width:100%;height:220px;object-fit:cover"
+            ></video>
+          `;
+        }
+
+        const price =
+          p.price !== null && p.price !== undefined
+            ? `${html(Number(p.price).toLocaleString("en-US"))} ${html(p.currency || "")}`
+            : "السعر عند الاستفسار";
+
+        const phone = p.contact_phone
+          ? `
+            <a
+              class="btn btn-outline property-contact"
+              href="tel:${html(p.contact_phone)}"
+            >
+              اتصل بالمعلن
+            </a>
+          `
+          : "";
 
         return `
           <article class="property-card">
-            <div class="property-image">${imageHTML}
-              <span class="property-badge">${escapeHTML(purpose)}</span>
+            <div class="property-image">
+              ${visual}
+
+              <span class="property-badge">
+                ${html(purposeLabel[p.purpose] || p.purpose)}
+              </span>
             </div>
+
             <div class="property-info">
-              <h3>${escapeHTML(item.title)}</h3>
-              <p>${escapeHTML(item.governorate || "")} ${escapeHTML(item.city || "")}</p>
+              <h3>${html(p.title)}</h3>
+
+              <p>
+                ${html(p.governorate)}
+                ${p.city ? " — " + html(p.city) : ""}
+                ${p.neighborhood ? " — " + html(p.neighborhood) : ""}
+              </p>
+
               <div class="property-meta">
-                <span>${escapeHTML(item.property_type || "")}</span>
+                <span>
+                  ${html(typeLabel[p.property_type] || p.property_type)}
+                </span>
+
+                ${p.area ? `<span>${html(p.area)} م²</span>` : ""}
+                ${p.bedrooms ? `<span>${html(p.bedrooms)} غرف</span>` : ""}
               </div>
-              <p>${escapeHTML(item.description || "")}</p>
+
+              <p>${html(p.description)}</p>
+
               <p class="property-price">${price}</p>
+
+              ${phone}
             </div>
-          </article>`;
+          </article>
+        `;
       }).join("");
     }
 
+    // تحميل العقارات المعتمدة فقط
     async function loadProperties() {
-      const grid = document.getElementById("propertyGrid");
-      if (grid) grid.innerHTML = "<p>جارٍ تحميل العقارات...</p>";
+      const grid = $("propertyGrid");
+
+      if (grid) {
+        grid.innerHTML = "<p>جارٍ تحميل العقارات...</p>";
+      }
 
       const { data, error } = await db
         .from("properties")
-        .select("*")
+        .select(propertySelect)
         .eq("status", "approved")
         .order("created_at", { ascending: false });
 
       if (error) {
-        if (grid) grid.innerHTML = "<p>تعذر تحميل العقارات: " + escapeHTML(error.message) + "</p>";
-        console.error(error);
+        console.error("loadProperties:", error);
+
+        if (grid) {
+          grid.innerHTML = `
+            <p>تعذر تحميل العقارات: ${html(error.message)}</p>
+          `;
+        }
+
         return;
       }
 
       renderProperties(data || []);
     }
 
-    /* البحث */
-    document.getElementById("searchForm")?.addEventListener("submit", async event => {
+    // البحث
+    $("searchForm")?.addEventListener("submit", async (event) => {
       event.preventDefault();
 
-      let query = db.from("properties")
-        .select("*")
+      let query = db
+        .from("properties")
+        .select(propertySelect)
         .eq("status", "approved")
         .order("created_at", { ascending: false });
 
-      const purpose = document.getElementById("purpose")?.value;
-      const type = document.getElementById("propertyType")?.value;
-      const city = document.getElementById("city")?.value;
+      const purpose = $("purpose")?.value || "";
+      const type = $("propertyType")?.value || "";
+      const governorate = $("city")?.value || "";
 
-      if (purpose) query = query.eq("deal_type", purpose);
-      if (type) query = query.eq("property_type", type);
-      if (city) query = query.eq("governorate", city);
+      if (purpose) {
+        query = query.eq(
+          "purpose",
+          purposeMap[purpose] || purpose
+        );
+      }
+
+      if (type) {
+        query = query.eq(
+          "property_type",
+          typeMap[type] || type
+        );
+      }
+
+      if (governorate) {
+        query = query.eq("governorate", governorate);
+      }
 
       const { data, error } = await query;
 
       if (error) {
-        statusMessage("حدث خطأ في البحث: " + error.message, true);
+        message(
+          "formMessage",
+          "تعذر تنفيذ البحث: " + error.message,
+          true
+        );
         return;
       }
 
       renderProperties(data || []);
-      document.getElementById("properties")?.scrollIntoView({ behavior: "smooth" });
+
+      $("properties")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
     });
 
-    /* رفع الصور والفيديو */
-    async function uploadMedia(files, userId) {
-      const urls = [];
+    // رفع الصور والفيديو
+    async function uploadPropertyFiles(files, propertyId) {
+      const rows = [];
 
-      for (const file of files) {
-        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-        const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}-${safeName}`;
+      for (let index = 0; index < files.length; index++) {
+        const file = files[index];
 
-        const { error } = await db.storage.from(BUCKET).upload(path, file, {
-          cacheControl: "3600",
-          upsert: false,
-          contentType: file.type || undefined
+        const isImage = file.type.startsWith("image/");
+        const isVideo = file.type.startsWith("video/");
+
+        if (!isImage && !isVideo) {
+          throw new Error(
+            `الملف ${file.name} ليس صورة أو فيديو مدعوماً.`
+          );
+        }
+
+        if (file.size > MAX_FILE_SIZE) {
+          throw new Error(
+            `حجم الملف ${file.name} أكبر من 50 ميغابايت.`
+          );
+        }
+
+        const cleanName = file.name.replace(
+          /[^a-zA-Z0-9._-]/g,
+          "_"
+        );
+
+        const storagePath =
+          `${currentUser.id}/${propertyId}/${Date.now()}-${index}-${cleanName}`;
+
+        const { error: uploadError } = await db
+          .storage
+          .from(STORAGE_BUCKET)
+          .upload(storagePath, file, {
+            cacheControl: "3600",
+            upsert: false,
+            contentType: file.type
+          });
+
+        if (uploadError) {
+          throw new Error(
+            `فشل رفع ${file.name}: ${uploadError.message}. تأكد من إنشاء bucket باسم ${STORAGE_BUCKET}.`
+          );
+        }
+
+        const { data: publicData } = db
+          .storage
+          .from(STORAGE_BUCKET)
+          .getPublicUrl(storagePath);
+
+        rows.push({
+          property_id: propertyId,
+          user_id: currentUser.id,
+          media_type: isImage ? "image" : "video",
+          file_url: publicData.publicUrl,
+          display_order: index
         });
-
-        if (error) throw new Error("فشل رفع الملف " + file.name + ": " + error.message);
-
-        const { data } = db.storage.from(BUCKET).getPublicUrl(path);
-        if (data?.publicUrl) urls.push(data.publicUrl);
       }
 
-      return urls;
+      if (rows.length) {
+        const { error } = await db
+          .from("property_media")
+          .insert(rows);
+
+        if (error) {
+          throw new Error(
+            "تم رفع الملفات لكن تعذر تسجيلها في قاعدة البيانات: " +
+            error.message
+          );
+        }
+      }
     }
 
-    /* إرسال إعلان جديد للمراجعة */
-    document.getElementById("propertyForm")?.addEventListener("submit", async event => {
+    // إضافة إعلان عقاري
+    $("propertyForm")?.addEventListener("submit", async (event) => {
       event.preventDefault();
 
       if (!currentUser) {
-        statusMessage("سجّل الدخول أولاً قبل إرسال الإعلان.", true);
-        document.getElementById("login")?.scrollIntoView({ behavior: "smooth" });
+        message(
+          "formMessage",
+          "يجب تسجيل الدخول أولاً قبل إرسال الإعلان.",
+          true
+        );
+
+        $("login")?.scrollIntoView({
+          behavior: "smooth"
+        });
+
         return;
       }
 
-      const title = document.getElementById("listingTitle").value.trim();
-      const purpose = document.getElementById("listingPurpose").value;
-      const type = document.getElementById("listingType").value;
-      const governorate = document.getElementById("listingCity").value;
-      const priceText = document.getElementById("listingPrice").value.trim();
-      const phone = document.getElementById("listingPhone").value.trim();
-      const details = document.getElementById("listingDetails").value.trim();
-      const files = Array.from(document.getElementById("listingMedia").files || []);
+      const title = $("listingTitle")?.value.trim() || "";
 
-      if (!title || !purpose || !type || !governorate || !phone || !details) {
-        statusMessage("يرجى تعبئة الحقول المطلوبة.", true);
+      const purpose =
+        purposeMap[$("listingPurpose")?.value] || "";
+
+      const propertyType =
+        typeMap[$("listingType")?.value] || "";
+
+      const governorate =
+        $("listingCity")?.value || "";
+
+      const priceText =
+        $("listingPrice")?.value.trim() || "";
+
+      const contactPhone =
+        $("listingPhone")?.value.trim() || "";
+
+      const description =
+        $("listingDetails")?.value.trim() || "";
+
+      const files = Array.from(
+        $("listingMedia")?.files || []
+      );
+
+      if (
+        !title ||
+        !purpose ||
+        !propertyType ||
+        !governorate ||
+        !contactPhone ||
+        !description
+      ) {
+        message(
+          "formMessage",
+          "يرجى تعبئة عنوان الإعلان والعملية والنوع والمحافظة ورقم التواصل والتفاصيل.",
+          true
+        );
         return;
       }
 
-      const submitButton = event.submitter;
-      if (submitButton) submitButton.disabled = true;
-      statusMessage("جارٍ تجهيز الإعلان ورفع الملفات...");
+      const price = priceText
+        ? Number(priceText.replace(/,/g, ""))
+        : null;
+
+      if (
+        priceText &&
+        (!Number.isFinite(price) || price < 0)
+      ) {
+        message(
+          "formMessage",
+          "السعر يجب أن يكون رقماً صحيحاً موجباً.",
+          true
+        );
+        return;
+      }
+
+      const submitButton =
+        event.submitter ||
+        $("propertyForm").querySelector('button[type="submit"]');
+
+      if (submitButton) {
+        submitButton.disabled = true;
+      }
+
+      message("formMessage", "جارٍ حفظ الإعلان...");
+
+      let savedPropertyId = null;
 
       try {
-        const images = files.length
-          ? await uploadMedia(files, currentUser.id)
-          : [];
-
-        const numericPrice = priceText ? Number(priceText.replace(/,/g, "")) : null;
-        if (priceText && !Number.isFinite(numericPrice)) {
-          throw new Error("يرجى إدخال السعر كرقم صحيح.");
-        }
-
-        const { error } = await db.from("properties").insert({
-          owner_id: currentUser.id,
-          title,
-          description: details + "\nرقم التواصل: " + phone,
-          property_type: type,
-          deal_type: purpose,
-          governorate,
-          price: numericPrice,
-          images,
-          status: "pending"
-        });
+        const { data, error } = await db
+          .from("properties")
+          .insert({
+            user_id: currentUser.id,
+            title,
+            description,
+            purpose,
+            property_type: propertyType,
+            governorate,
+            price,
+            contact_phone: contactPhone,
+            status: "pending"
+          })
+          .select("id")
+          .single();
 
         if (error) throw error;
 
-        document.getElementById("propertyForm").reset();
-        statusMessage("تم إرسال إعلانك بنجاح، وسيظهر بعد مراجعة الإدارة والموافقة عليه.");
+        savedPropertyId = data.id;
+
+        if (files.length) {
+          message(
+            "formMessage",
+            "تم حفظ الإعلان. جارٍ رفع الصور والفيديو..."
+          );
+
+          await uploadPropertyFiles(
+            files,
+            savedPropertyId
+          );
+        }
+
+        $("propertyForm").reset();
+
+        message(
+          "formMessage",
+          "تم إرسال إعلانك بنجاح. سيبقى قيد المراجعة ولن يظهر للعامة إلا بعد موافقة الإدارة."
+        );
+
       } catch (error) {
-        console.error(error);
-        statusMessage("لم يتم إرسال الإعلان: " + error.message, true);
+        console.error("submit property:", error);
+
+        const prefix = savedPropertyId
+          ? "تم حفظ الإعلان، لكن تعذر إكمال رفع المرفقات: "
+          : "تعذر إرسال الإعلان: ";
+
+        message(
+          "formMessage",
+          prefix + (error.message || "خطأ غير معروف"),
+          true
+        );
+
       } finally {
-        if (submitButton) submitButton.disabled = false;
+        if (submitButton) {
+          submitButton.disabled = false;
+        }
       }
     });
 
-    /* المساعد الأولي: تنظيم النص محلياً دون ادعاء اتصال AI */
-    document.getElementById("aiPrepareButton")?.addEventListener("click", () => {
-      const input = document.getElementById("aiDescription");
-      const output = document.getElementById("aiResult");
-      const description = input?.value.trim();
+    // أداة تنظيم محلية فقط وليست ذكاء اصطناعياً متصلاً
+    $("aiPrepareButton")?.addEventListener("click", () => {
+      const text = $("aiDescription")?.value.trim() || "";
 
-      if (!description) {
-        if (output) output.textContent = "اكتب وصف العقار أولاً.";
+      if (!text) {
+        message("aiResult", "اكتب وصف العقار أولاً.");
         return;
       }
 
-      if (output) {
-        output.textContent =
-          "مسودة أولية لوصفك:\n\n" + description +
-          "\n\nيرجى التأكد من إضافة المحافظة والمنطقة والسعر والمساحة وعدد الغرف ووسيلة التواصل قبل نشر الإعلان.";
-      }
+      const checklist =
+        "المعلومات التي يُفضّل استكمالها: المحافظة والمنطقة، السعر والعملة، المساحة، عدد الغرف والحمامات، الطابق، وحالة العقار.";
+
+      message(
+        "aiResult",
+        `مسودة وصفك:\n\n${text}\n\n${checklist}\n\nتنبيه: هذه أداة تنظيم نص محلية وليست خدمة ذكاء اصطناعي متصلة حالياً.`
+      );
     });
 
-    const year = document.getElementById("currentYear");
-    if (year) year.textContent = new Date().getFullYear();
+    // السنة والقائمة
+    if ($("currentYear")) {
+      $("currentYear").textContent =
+        new Date().getFullYear();
+    }
 
-    document.getElementById("menuToggle")?.addEventListener("click", () => {
-      document.getElementById("mainNav")?.classList.toggle("active");
+    $("menuToggle")?.addEventListener("click", () => {
+      $("mainNav")?.classList.toggle("open");
     });
 
     await refreshUser();
@@ -350,16 +749,30 @@
 
     db.auth.onAuthStateChange((_event, session) => {
       currentUser = session?.user || null;
-      updateAccountUI();
+      renderAccount();
     });
 
-    console.log("سوريا عقارات: تم تهيئة اتصال Supabase.");
+    console.info(
+      "تم تهيئة ربط سوريا عقارات مع Supabase."
+    );
   }
 
-  loadSupabase()
-    .then(() => start())
-    .catch(error => {
-      console.error(error);
-      statusMessage("تعذر تشغيل الربط مع قاعدة البيانات: " + error.message, true);
-    });
+  main().catch((error) => {
+    console.error(
+      "Syria Real Estate initialization:",
+      error
+    );
+
+    message(
+      "formMessage",
+      "تعذر تشغيل ربط المنصة: " + error.message,
+      true
+    );
+
+    message(
+      "accountMessage",
+      "تعذر الاتصال بالخدمة: " + error.message,
+      true
+    );
+  });
 })();
