@@ -76,9 +76,10 @@
     const lib = await loadSupabaseLibrary();
     await testSupabaseConnection();
     const db = lib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
     let currentUser = null;
+    let isAdmin = false;
 
     const loginSection = $("login");
     if (loginSection) {
@@ -108,9 +109,28 @@
       if ($("signInButton")) $("signInButton").hidden = !!currentUser;
       if ($("signUpButton")) $("signUpButton").hidden = !!currentUser;
       if ($("signOutButton")) $("signOutButton").hidden = !currentUser;
+      if ($("adminNavButton")) $("adminNavButton").hidden = !isAdmin;
       setMessage("accountMessage", currentUser
         ? `تم تسجيل الدخول: ${currentUser.email || ""}`
         : "يمكنك تسجيل الدخول أو إنشاء حساب جديد.");
+    }
+
+    async function refreshAdminState() {
+      isAdmin = false;
+      if (currentUser) {
+        const { data, error } = await db.from("profiles")
+          .select("role,is_active").eq("id", currentUser.id).maybeSingle();
+        if (error) console.warn("تعذر فحص صلاحية الإدارة:", error.message);
+        isAdmin = !!data && data.role === "admin" && data.is_active === true;
+      }
+      renderAccount();
+      if (isAdmin) await loadPendingListings();
+      else {
+        if ($("adminNavButton")) $("adminNavButton").hidden = true;
+        if ($("adminMessage")) $("adminMessage").textContent = currentUser
+          ? "هذا الحساب لا يملك صلاحية الإدارة."
+          : "سجّل الدخول بحساب المدير لعرض طلبات النشر.";
+      }
     }
 
     async function refreshUser() {
@@ -118,6 +138,7 @@
       if (error) console.warn("auth.getUser:", error.message);
       currentUser = data?.user || null;
       renderAccount();
+      await refreshAdminState();
     }
 
     $("signUpButton")?.addEventListener("click", async () => {
@@ -169,6 +190,7 @@
         if (error) throw error;
         currentUser = data.user;
         renderAccount();
+        await refreshAdminState();
         await loadListings();
       } catch (error) {
         setMessage("accountMessage", "تعذر تسجيل الدخول: " + (error.message || "خطأ غير معروف"), true);
@@ -184,7 +206,9 @@
         return;
       }
       currentUser = null;
+      isAdmin = false;
       renderAccount();
+      await refreshAdminState();
       await loadListings();
     });
 
@@ -264,6 +288,64 @@
       }
       await renderListings(data || []);
     }
+
+    async function loadPendingListings() {
+      const panel = $("adminMessage");
+      if (!panel || !isAdmin) return;
+      panel.innerHTML = "<p>جارٍ تحميل طلبات النشر المعلقة...</p>";
+      const { data, error } = await db.from("listings")
+        .select(listingSelect).eq("status", "pending")
+        .order("created_at", { ascending: true });
+      if (error) {
+        console.error("loadPendingListings:", error);
+        panel.textContent = "تعذر تحميل الطلبات: " + error.message;
+        return;
+      }
+      if (!data?.length) {
+        panel.textContent = "لا توجد طلبات نشر معلّقة حالياً.";
+        return;
+      }
+      panel.innerHTML = `
+        <div style="display:grid;gap:14px">
+          <h3>طلبات النشر المعلقة (${data.length})</h3>
+          ${data.map(p => `
+            <article class="property-card" style="padding:16px">
+              <h3>${escapeHTML(p.title)}</h3>
+              <p>${escapeHTML(p.governorate || "")} — ${escapeHTML(p.city || "")}</p>
+              <p>${escapeHTML(p.description || "")}</p>
+              <p>النوع: ${escapeHTML(typeLabel[p.property_type] || p.property_type || "")}
+                | العملية: ${escapeHTML(purposeLabel[p.listing_type] || p.listing_type || "")}</p>
+              <p>السعر: ${p.price == null ? "غير محدد" : escapeHTML(p.price) + " " + escapeHTML(p.currency || "")}
+                | هاتف التواصل: ${escapeHTML(p.contact_phone || "")}</p>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-primary" type="button" data-listing-action="approve" data-listing-id="${escapeHTML(p.id)}">✓ موافقة ونشر</button>
+                <button class="btn btn-outline" type="button" data-listing-action="reject" data-listing-id="${escapeHTML(p.id)}">رفض الطلب</button>
+              </div>
+            </article>`).join("")}
+        </div>`;
+    }
+
+    $("adminMessage")?.addEventListener("click", async (event) => {
+      const button = event.target.closest("button[data-listing-action]");
+      if (!button || !isAdmin) return;
+      const id = button.dataset.listingId;
+      const action = button.dataset.listingAction;
+      const nextStatus = action === "approve" ? "approved" : "rejected";
+      const confirmText = action === "approve"
+        ? "تأكيد الموافقة على الإعلان ونشره للعامة؟"
+        : "تأكيد رفض طلب النشر؟";
+      if (!window.confirm(confirmText)) return;
+      button.disabled = true;
+      const { error } = await db.from("listings")
+        .update({ status: nextStatus }).eq("id", id).eq("status", "pending");
+      if (error) {
+        window.alert("تعذر تحديث الطلب: " + error.message);
+        button.disabled = false;
+        return;
+      }
+      await loadPendingListings();
+      await loadListings();
+    });
 
     $("searchForm")?.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -374,7 +456,7 @@
     await loadListings();
     db.auth.onAuthStateChange((_event, session) => {
       currentUser = session?.user || null;
-      renderAccount();
+      refreshAdminState().catch(error => console.error("admin refresh:", error));
     });
     console.info("تم تشغيل سوريا عقارات وربطها بقاعدة البيانات الصحيحة.");
   }
