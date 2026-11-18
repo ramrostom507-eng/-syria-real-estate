@@ -32,21 +32,52 @@
   }
 
   function loadSupabaseLibrary() {
+    if (window.supabase?.createClient) return Promise.resolve(window.supabase);
+    const sources = [
+      "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+      "https://unpkg.com/@supabase/supabase-js@2"
+    ];
     return new Promise((resolve, reject) => {
-      if (window.supabase?.createClient) return resolve(window.supabase);
-      const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-      script.onload = () => window.supabase?.createClient
-        ? resolve(window.supabase)
-        : reject(new Error("لم يتم تحميل مكتبة Supabase."));
-      script.onerror = () => reject(new Error("تعذر تحميل مكتبة Supabase. تحقق من اتصال الإنترنت."));
-      document.head.appendChild(script);
+      let index = 0;
+      const tryNext = () => {
+        if (window.supabase?.createClient) return resolve(window.supabase);
+        if (index >= sources.length) {
+          return reject(new Error("تعذر تحميل مكتبة الاتصال من مصدريها. قد يكون مانع الإعلانات أو الشبكة يحجب مواقع المكتبات."));
+        }
+        const script = document.createElement("script");
+        script.src = sources[index++];
+        script.async = true;
+        script.onload = () => window.supabase?.createClient
+          ? resolve(window.supabase)
+          : tryNext();
+        script.onerror = tryNext;
+        document.head.appendChild(script);
+      };
+      tryNext();
     });
+  }
+
+  async function testSupabaseConnection() {
+    try {
+      const response = await fetch(SUPABASE_URL + "/auth/v1/health", {
+        method: "GET",
+        headers: { apikey: SUPABASE_ANON_KEY },
+        cache: "no-store"
+      });
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      return true;
+    } catch (error) {
+      console.error("Supabase network check:", error);
+      throw new Error("المتصفح لا يستطيع الوصول إلى خادم التسجيل. جرّب إيقاف VPN أو مانع الإعلانات مؤقتاً أو فتح الموقع من متصفح آخر. التفاصيل: " + (error.message || "NetworkError"));
+    }
   }
 
   async function main() {
     const lib = await loadSupabaseLibrary();
-    const db = lib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    await testSupabaseConnection();
+    const db = lib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
     let currentUser = null;
 
     const loginSection = $("login");
@@ -113,7 +144,11 @@
           setMessage("accountMessage", "تم إرسال طلب إنشاء الحساب. تحقق من بريدك الإلكتروني إذا كان تأكيد البريد مفعّلاً، ثم سجّل الدخول.");
         }
       } catch (error) {
-        setMessage("accountMessage", "تعذر إنشاء الحساب: " + (error.message || "خطأ غير معروف"), true);
+        console.error("signUp error:", error);
+        const detail = error instanceof TypeError || /Failed to fetch|NetworkError|fetch/i.test(error.message || "")
+          ? "تعذر على المتصفح الوصول إلى خدمة التسجيل. تحقق من الاتصال أو VPN أو مانع الإعلانات ثم أعد المحاولة."
+          : (error.message || "خطأ غير معروف");
+        setMessage("accountMessage", "تعذر إنشاء الحساب: " + detail, true);
       } finally {
         button.disabled = false;
       }
