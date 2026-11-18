@@ -32,6 +32,7 @@
 
     <div class="header-actions">
       <a class="btn btn-primary" href="#add-property">أضف عقارك</a>
+      <a class="btn btn-outline" id="adminNavButton" href="#admin-panel">⚙ الإدارة</a>
     </div>
   </header>
 
@@ -250,6 +251,35 @@
         <a class="btn btn-light" href="#add-property">ابدأ بإضافة عقارك</a>
         <small>إنشاء الفيديو الفعلي يحتاج إلى ربط خدمة معالجة فيديو.</small>
       </div>
+    </section>
+
+    <section class="add-section" id="login">
+      <div class="section-heading">
+        <span class="eyebrow">الدخول إلى المنصة</span>
+        <h2>تسجيل دخول المدير</h2>
+        <p>أدخل بريدك وكلمة المرور لفتح أدوات الإدارة.</p>
+      </div>
+      <div style="max-width:520px;margin:auto;display:grid;gap:10px">
+        <input id="accountName" type="text" autocomplete="name" placeholder="الاسم الكامل (للحساب الجديد)">
+        <input id="accountEmail" type="email" autocomplete="username" placeholder="البريد الإلكتروني">
+        <input id="accountPassword" type="password" autocomplete="current-password" placeholder="كلمة المرور">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" id="signInButton" type="button">تسجيل الدخول</button>
+          <button class="btn btn-outline" id="signUpButton" type="button">إنشاء حساب</button>
+          <button class="btn btn-outline" id="signOutButton" type="button" hidden>تسجيل الخروج</button>
+        </div>
+        <p id="accountMessage" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="section" id="admin-panel">
+      <div class="section-heading">
+        <span class="eyebrow">لوحة التحكم</span>
+        <h2>إدارة عقارات سوريا</h2>
+        <p>هذه بوابة الإدارة. سجّل الدخول بالحساب الذي تم منحه صلاحية المدير.</p>
+        <a class="btn btn-primary" href="#login">تسجيل الدخول للإدارة</a>
+      </div>
+      <div id="adminMessage" class="notice" aria-live="polite">يلزم تسجيل الدخول والتحقق من صلاحية المدير لعرض الطلبات.</div>
     </section>
 
     <section class="add-section" id="add-property">
