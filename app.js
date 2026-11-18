@@ -76,7 +76,7 @@
     const lib = await loadSupabaseLibrary();
     await testSupabaseConnection();
     const db = lib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
     });
     let currentUser = null;
 
