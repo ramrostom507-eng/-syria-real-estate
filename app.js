@@ -312,9 +312,9 @@
 
     $("propertyForm")?.addEventListener("submit", async (event) => {
       event.preventDefault();
-      if (!currentUser) {
-        setMessage("formMessage", "يجب تسجيل الدخول أولاً قبل إرسال الإعلان.", true);
-        $("login")?.scrollIntoView({ behavior:"smooth" });
+      const files = Array.from($("listingMedia")?.files || []);
+      if (files.length) {
+        setMessage("formMessage", "إرسال العقارات النصية متاح الآن دون حساب. رفع الصور والفيديو سيُفعّل بعد استكمال إعداد التخزين الآمن.", true);
         return;
       }
       const title = $("listingTitle")?.value.trim() || "";
@@ -324,7 +324,6 @@
       const priceText = $("listingPrice")?.value.trim() || "";
       const contactPhone = $("listingPhone")?.value.trim() || "";
       const description = $("listingDetails")?.value.trim() || "";
-      const files = Array.from($("listingMedia")?.files || []);
       if (!title || !listingType || !propertyType || !governorate || !contactPhone || !description) {
         setMessage("formMessage", "يرجى تعبئة جميع الحقول الأساسية قبل الإرسال.", true);
         return;
@@ -344,19 +343,15 @@
       let savedId = null;
       try {
         const { data, error } = await db.from("listings").insert({
-          owner_id: currentUser.id,
+          owner_id: null,
           title, description, listing_type: listingType, property_type: propertyType,
           country: "سوريا", governorate, city: governorate,
           price, currency: "USD", contact_phone: contactPhone, status: "pending"
         }).select("id").single();
         if (error) throw error;
         savedId = data.id;
-        if (files.length) {
-          setMessage("formMessage", "تم حفظ الإعلان. جارٍ رفع الصور والفيديو...");
-          await uploadFiles(files, savedId);
-        }
         $("propertyForm").reset();
-        setMessage("formMessage", "تم إرسال إعلانك بنجاح. سيبقى قيد المراجعة ولن يظهر للعامة إلا بعد موافقة الإدارة.");
+        setMessage("formMessage", "تم استلام إعلانك بنجاح دون الحاجة إلى حساب. سيبقى قيد المراجعة ولن يظهر للعامة إلا بعد موافقة الإدارة.");
       } catch (error) {
         console.error("submit listing:", error);
         setMessage("formMessage", (savedId ? "تم حفظ الإعلان لكن تعذر إكمال المرفقات: " : "تعذر إرسال الإعلان: ") +
