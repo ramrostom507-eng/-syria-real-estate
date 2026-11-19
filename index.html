@@ -7,13 +7,13 @@
   <meta name="description" content="سوريا عقارات - منصتك الذكية للبيع والشراء والإيجار والاستثمار العقاري في سوريا.">
   <meta name="theme-color" content="#102b2a">
   <title>سوريا عقارات | المنصة العقارية الذكية</title>
-  <link rel="stylesheet" href="styles.css?v=20261119-sharepost1">
+  <link rel="stylesheet" href="styles.css?v=20261119-layout2">
 </head>
 <body>
 
   <header class="site-header">
     <a class="brand" href="#home">
-      <span class="brand-icon">س</span>
+      <span class="brand-icon">س</span><span class="syrian-flag" role="img" aria-label="علم سوريا الجديد"><i>★★★</i><i></i><i></i></span>
       <span>
         <strong>سوريا عقارات</strong>
         <small>منصتك العقارية الذكية</small>
@@ -29,7 +29,6 @@
       <a href="#searchForm">بحث سريع</a>
       <a href="#add-property">＋ انشر عقارك</a>
       <a href="#my-listings">إعلاناتي</a>
-      <a href="#login">الإدارة</a>
     </nav>
 
     <div class="header-actions">
@@ -50,6 +49,12 @@
   </section>
 
   <main>
+  <div class="portal-layout">
+    <aside class="portal-sidebar portal-sidebar-right" aria-label="التنقل السريع">
+      <section class="portal-side-card"><span class="portal-side-kicker">اكتشف المنصة</span><h3>كل ما يهمك عقارياً</h3><a href="#properties">🏠 أحدث العقارات</a><a href="#searchForm">⌕ ابحث عن عقار</a><a href="#community">👥 المجتمع العقاري</a><a href="#add-property">＋ أضف إعلانك</a><a href="#saved-listings">🔖 المحفوظات</a></section>
+      <section class="portal-side-card portal-side-highlight"><span class="portal-side-kicker">شاركنا</span><h3>عقارك يستحق أن يُرى</h3><p>انشر إعلانك مع الصور أو الفيديو، وسيظهر بعد مراجعة الإدارة.</p><a class="portal-side-cta" href="#add-property">انشر عقارك الآن</a></section>
+    </aside>
+    <div class="portal-main-column">
 
 <section class="community-section" id="community">
   <div class="community-heading"><span class="eyebrow">مجتمع سوريا عقارات</span><h2>مجتمعنا العقاري</h2><p>انشر سؤالك أو فرصتك أو تجربتك باسمك المستعار، وشارك الآخرين دون إنشاء حساب.</p></div>
@@ -132,6 +137,12 @@
         <div class="empty-state">جارٍ تحميل العروض العقارية المعتمدة...</div>
       </div>
     </section>
+    </div>
+    <aside class="portal-sidebar portal-sidebar-left" aria-label="معلومات المنصة">
+      <section class="portal-side-card portal-follow-card"><span class="portal-side-kicker">مجتمعنا يكبر بكم</span><h3>تابع سوريا عقارات</h3><div class="portal-follower-number"><span id="portalFollowerMirror">—</span><small>متابع للمنصة</small></div><p>كن قريباً من أحدث الفرص والإعلانات العقارية.</p><button type="button" id="portalFollowMirror" class="portal-side-cta">＋ متابعة المنصة</button><small id="portalFollowMirrorMessage" aria-live="polite"></small></section>
+      <section class="portal-side-card"><span class="portal-side-kicker">معلومة مهمة</span><h3>منصة للجميع</h3><p>تصفّح وتفاعل وانشر باسم مستعار، دون الحاجة إلى إنشاء حساب.</p></section>
+    </aside>
+  </div>
     <section class="section saved-listings-section" id="saved-listings">
       <div class="section-heading"><span class="eyebrow">قائمتك الخاصة</span><h2>الإعلانات المحفوظة</h2><p>الإعلانات التي تحفظها تظهر هنا على هذا الجهاز.</p></div>
       <div id="savedListings"><p class="empty-state">جارٍ تحميل المحفوظات...</p></div>
@@ -242,6 +253,6 @@
     <p class="copyright">© <span id="currentYear"></span> سوريا عقارات. جميع الحقوق محفوظة.</p>
   </footer>
 
-  <script src="app.js?v=20261119-sharepost1"></script>
+  <script src="app.js?v=20261119-layout2"></script>
 </body>
 </html>
