@@ -340,6 +340,26 @@
       return id;
     }
     const socialGuest = socialGuestId();
+    // لا نحتسب تحديث الصفحة كمشاهدة جديدة: مشاهدة واحدة لكل إعلان/وسيط من الجهاز نفسه كل 24 ساعة.
+    const VIEW_DEDUPE_KEY = "syriaRealEstateViewDedupeV1";
+    const VIEW_DEDUPE_WINDOW = 24 * 60 * 60 * 1000;
+    function readViewDedupe() {
+      try {
+        const value = JSON.parse(localStorage.getItem(VIEW_DEDUPE_KEY) || "{}");
+        return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+      } catch (_) { return {}; }
+    }
+    function hasRecentView(key, store = readViewDedupe()) {
+      const timestamp = Number(store[key] || 0);
+      return timestamp > 0 && Date.now() - timestamp < VIEW_DEDUPE_WINDOW;
+    }
+    function saveViewDedupe(store) {
+      try {
+        const cutoff = Date.now() - VIEW_DEDUPE_WINDOW;
+        Object.keys(store).forEach(key => { if (Number(store[key]) < cutoff) delete store[key]; });
+        localStorage.setItem(VIEW_DEDUPE_KEY, JSON.stringify(store));
+      } catch (error) { console.warn("تعذر حفظ سجل المشاهدات المحلي:", error); }
+    }
 
     async function renderListings(listings) {
       const grid = $("propertyGrid");
@@ -374,13 +394,19 @@
         views: Number(x.views || 0), image_views: Number(x.image_views || 0), video_views: Number(x.video_views || 0)
       }]));
       if (viewsResult.error) console.warn("تعذر تحميل إحصائيات المشاهدات:", viewsResult.error.message);
-      let listingViewIncrement = 0;
-      if (listingIds.length) {
-        const impressionRows = listingIds.map(listing_id => ({ listing_id, event_type: "listing" }));
+      const viewDedupe = readViewDedupe();
+      const newlyViewedListingIds = listingIds.filter(id => !hasRecentView("listing:" + id, viewDedupe));
+      if (newlyViewedListingIds.length) {
+        const impressionRows = newlyViewedListingIds.map(listing_id => ({ listing_id, event_type: "listing" }));
         const impressionResult = await db.from("listing_views").insert(impressionRows);
-        if (impressionResult.error) console.warn("تعذر تسجيل مشاهدات الإعلانات:", impressionResult.error.message);
-        else listingViewIncrement = 1;
+        if (impressionResult.error) {
+          console.warn("تعذر تسجيل مشاهدات الإعلانات:", impressionResult.error.message);
+        } else {
+          newlyViewedListingIds.forEach(id => { viewDedupe["listing:" + id] = Date.now(); });
+          saveViewDedupe(viewDedupe);
+        }
       }
+      const countedListingIds = new Set(newlyViewedListingIds);
       if (likesResult.error) console.warn("تعذر تحميل الإعجابات:", likesResult.error.message);
       if (commentsResult.error) console.warn("تعذر تحميل التعليقات:", commentsResult.error.message);
       const likeCounts = new Map(), commentCounts = new Map();
@@ -447,7 +473,7 @@
               <p class="property-description">${escapeHTML(p.description || "")}</p>
               <p class="property-price">${price}</p>
               <div class="property-view-stats" aria-label="إحصائيات المشاهدة">
-                <span>👁 <strong data-listing-views="${escapeHTML(p.id)}">${(viewCounts.get(p.id)?.views || 0) + listingViewIncrement}</strong> مشاهدة</span>
+                <span>👁 <strong data-listing-views="${escapeHTML(p.id)}">${(viewCounts.get(p.id)?.views || 0) + (countedListingIds.has(p.id) ? 1 : 0)}</strong> مشاهدة</span>
                 <span>📷 <strong data-image-views="${escapeHTML(p.id)}">${viewCounts.get(p.id)?.image_views || 0}</strong></span>
                 <span>🎬 <strong data-video-views="${escapeHTML(p.id)}">${viewCounts.get(p.id)?.video_views || 0}</strong></span>
               </div>
@@ -476,8 +502,13 @@
       grid.innerHTML = cards.join("");
       renderSavedListings();
       const recordMediaView = async (mediaId, eventType, listingId) => {
+        const store = readViewDedupe();
+        const dedupeKey = eventType + ":" + mediaId;
+        if (hasRecentView(dedupeKey, store)) return;
         const result = await db.from("listing_views").insert({ listing_id: listingId, media_id: mediaId, event_type: eventType });
         if (result.error) { console.warn("تعذر تسجيل مشاهدة الوسائط:", result.error.message); return; }
+        store[dedupeKey] = Date.now();
+        saveViewDedupe(store);
         const counterName = eventType === "image" ? "image" : "video";
         const counter = grid.querySelector('[data-' + counterName + '-views="' + CSS.escape(listingId) + '"]');
         if (counter) counter.textContent = String(Number(counter.textContent || 0) + 1);
@@ -1029,7 +1060,7 @@
       if(remove){setSavedListing(remove.dataset.removeSaved,false);await renderSavedListings();const card=document.querySelector('[data-post-save="'+CSS.escape(remove.dataset.removeSaved)+'"]');if(card)card.textContent="🔖 حفظ المنشور";return;}
       if(open){document.getElementById("property-"+CSS.escape(open.dataset.openSaved))?.scrollIntoView({behavior:"smooth",block:"center"});}
     });
-    $("communityFeed")?.addEventListener("click",async ev=>{const copy=ev.target.closest("[data-community-copy]"),adminAction=ev.target.closest("[data-community-admin]"),like=ev.target.closest("[data-community-like]"),focus=ev.target.closest("[data-community-focus]"),report=ev.target.closest("[data-community-report]");if(copy){const id=copy.dataset.communityCopy,url=window.location.href.split("#")[0]+"#community-post-"+id;try{await navigator.clipboard.writeText(url);copy.textContent="تم نسخ الرابط";}catch(e){window.prompt("انسخ رابط المنشور:",url);}return;}if(adminAction&&isAdmin){const id=adminAction.dataset.id,act=adminAction.dataset.communityAdmin;adminAction.disabled=true;try{if(act==="delete"){if(!window.confirm("حذف المنشور نهائياً؟")){adminAction.disabled=false;return;}const {error}=await db.from("community_posts").delete().eq("id",id);if(error)throw error;}else if(act==="pin"){const {error}=await db.from("community_posts").update({is_pinned:adminAction.dataset.pinned!=="true"}).eq("id",id);if(error)throw error;}else if(act==="hide"){const {error}=await db.from("community_posts").update({status:"hidden"}).eq("id",id);if(error)throw error;}await loadCommunityFeed();await loadCommunityAdmin();}catch(e){window.alert("تعذر تنفيذ الإجراء: "+e.message);adminAction.disabled=false;}return;}if(focus){document.querySelector('[data-community-comment="'+focus.dataset.communityFocus+'"] input[name="body"]')?.focus();return;}if(share){const id=share.dataset.communityShare,url=window.location.href.split("#")[0]+"#community-post-"+id,title="منشور من منصة سوريا عقارات";try{if(navigator.share){await navigator.share({title,text:title,url});}else if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(url);window.alert("تم نسخ رابط المنشور، يمكنك مشاركته.");}else{window.prompt("انسخ رابط المنشور لمشاركته:",url);}}catch(e){if(e.name!=="AbortError")window.prompt("انسخ رابط المنشور لمشاركته:",url);}return;}if(like){const id=like.dataset.communityLike,t=communityToken();like.disabled=true;const old=await db.from("community_post_reactions").select("post_id").eq("post_id",id).eq("guest_token",t).maybeSingle();const r=old.data?await db.from("community_post_reactions").delete().eq("post_id",id).eq("guest_token",t):await db.from("community_post_reactions").insert({post_id:id,guest_token:t,reaction:"like"});if(r.error)window.alert("تعذر تحديث الإعجاب: "+r.error.message);await loadCommunityFeed();return;}if(report){const reason=window.prompt("ما سبب الإبلاغ عن المنشور؟");if(!reason?.trim())return;const r=await db.from("community_post_reports").insert({post_id:report.dataset.communityReport,guest_token:communityToken(),reason:reason.trim()});if(r.error)window.alert("تعذر إرسال البلاغ: "+r.error.message);else window.alert("تم إرسال البلاغ للإدارة.");}});
+    $("communityFeed")?.addEventListener("click",async ev=>{const copy=ev.target.closest("[data-community-copy]"),adminAction=ev.target.closest("[data-community-admin]"),like=ev.target.closest("[data-community-like]"),focus=ev.target.closest("[data-community-focus]"),report=ev.target.closest("[data-community-report]"),share=ev.target.closest("[data-community-share]");if(copy){const id=copy.dataset.communityCopy,url=window.location.href.split("#")[0]+"#community-post-"+id;try{await navigator.clipboard.writeText(url);copy.textContent="تم نسخ الرابط";}catch(e){window.prompt("انسخ رابط المنشور:",url);}return;}if(adminAction&&isAdmin){const id=adminAction.dataset.id,act=adminAction.dataset.communityAdmin;adminAction.disabled=true;try{if(act==="delete"){if(!window.confirm("حذف المنشور نهائياً؟")){adminAction.disabled=false;return;}const {error}=await db.from("community_posts").delete().eq("id",id);if(error)throw error;}else if(act==="pin"){const {error}=await db.from("community_posts").update({is_pinned:adminAction.dataset.pinned!=="true"}).eq("id",id);if(error)throw error;}else if(act==="hide"){const {error}=await db.from("community_posts").update({status:"hidden"}).eq("id",id);if(error)throw error;}await loadCommunityFeed();await loadCommunityAdmin();}catch(e){window.alert("تعذر تنفيذ الإجراء: "+e.message);adminAction.disabled=false;}return;}if(focus){document.querySelector('[data-community-comment="'+focus.dataset.communityFocus+'"] input[name="body"]')?.focus();return;}if(share){const id=share.dataset.communityShare,url=window.location.href.split("#")[0]+"#community-post-"+id,title="منشور من منصة سوريا عقارات";try{if(navigator.share){await navigator.share({title,text:title,url});}else if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(url);window.alert("تم نسخ رابط المنشور، يمكنك مشاركته.");}else{window.prompt("انسخ رابط المنشور لمشاركته:",url);}}catch(e){if(e.name!=="AbortError")window.prompt("انسخ رابط المنشور لمشاركته:",url);}return;}if(like){const id=like.dataset.communityLike,t=communityToken();like.disabled=true;const old=await db.from("community_post_reactions").select("post_id").eq("post_id",id).eq("guest_token",t).maybeSingle();const r=old.data?await db.from("community_post_reactions").delete().eq("post_id",id).eq("guest_token",t):await db.from("community_post_reactions").insert({post_id:id,guest_token:t,reaction:"like"});if(r.error)window.alert("تعذر تحديث الإعجاب: "+r.error.message);await loadCommunityFeed();return;}if(report){const reason=window.prompt("ما سبب الإبلاغ عن المنشور؟");if(!reason?.trim())return;const r=await db.from("community_post_reports").insert({post_id:report.dataset.communityReport,guest_token:communityToken(),reason:reason.trim()});if(r.error)window.alert("تعذر إرسال البلاغ: "+r.error.message);else window.alert("تم إرسال البلاغ للإدارة.");}});
     $("communityFeed")?.addEventListener("submit",async ev=>{const f=ev.target.closest("form[data-community-comment]");if(!f)return;ev.preventDefault();const name=f.elements.display_name.value.trim(),body=f.elements.body.value.trim(),id=f.dataset.communityComment,b=f.querySelector("button");b.disabled=true;try{localStorage.setItem(COMMUNITY_NAME_KEY,name);const {error}=await db.from("community_post_comments").insert({post_id:id,guest_token:communityToken(),display_name:name,body});if(error)throw error;await loadCommunityFeed();}catch(e){window.alert("تعذر نشر التعليق: "+e.message);}finally{b.disabled=false;}});
     $("communityAdminPanel")?.addEventListener("click",async ev=>{const b=ev.target.closest("[data-community-admin],[data-community-report-done]");if(!b||!isAdmin)return;b.disabled=true;try{if(b.dataset.communityReportDone){const {error}=await db.from("community_post_reports").update({status:"reviewed"}).eq("id",b.dataset.communityReportDone);if(error)throw error;}else{const id=b.dataset.id,act=b.dataset.communityAdmin;if(act==="delete"){if(!window.confirm("حذف المنشور نهائياً؟")){b.disabled=false;return;}const {error}=await db.from("community_posts").delete().eq("id",id);if(error)throw error;}else if(act==="pin"){const {error}=await db.from("community_posts").update({is_pinned:b.dataset.pinned!=="true"}).eq("id",id);if(error)throw error;}else if(act==="hide"){const {error}=await db.from("community_posts").update({status:"hidden"}).eq("id",id);if(error)throw error;}else{const {error}=await db.from("community_posts").update({status:act==="approve"?"approved":"rejected"}).eq("id",id);if(error)throw error;}}await loadCommunityAdmin();await loadCommunityFeed();}catch(e){window.alert("تعذر تنفيذ الإجراء: "+e.message);b.disabled=false;}});
 
