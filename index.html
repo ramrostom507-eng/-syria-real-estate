@@ -134,8 +134,8 @@
 <section class="add-section" id="login">
       <div class="section-heading">
         <span class="eyebrow">الدخول إلى المنصة</span>
-        <h2>تسجيل دخول المدير</h2>
-        <p>أدخل بريدك وكلمة المرور لفتح أدوات الإدارة.</p>
+        <h2>دخول الإدارة</h2>
+        <p>هذا الدخول مخصص للمدير فقط. نشر العقارات وتعديلها لا يحتاج إلى حساب.</p>
       </div>
       <div style="max-width:520px;margin:auto;display:grid;gap:10px">
         <input id="accountName" type="text" autocomplete="name" placeholder="الاسم الكامل (للحساب الجديد)">
@@ -167,7 +167,7 @@
         <p>أضف عقارك مباشرة دون إنشاء حساب. ستراجع الإدارة الإعلان قبل نشره.</p>
       </div>
 
-      <form id="propertyForm" class="property-form">
+      <div class="guest-manage-box"><h3>إدارة إعلانك بدون حساب</h3><p>أدخل رقم الإعلان ورمز الإدارة اللذين حصلت عليهما عند النشر لتعديله أو حذفه.</p><form id="guestLookupForm" class="guest-lookup-form"><input id="guestListingId" type="text" placeholder="رقم الإعلان" required><input id="guestListingToken" type="password" placeholder="رمز الإدارة الخاص" required autocomplete="off"><button class="btn btn-outline" type="submit">فتح إعلاني</button></form><p id="guestLookupMessage" aria-live="polite"></p><div id="guestManagePanel"></div></div><div id="guestCredentials" aria-live="polite"></div>      <form id="propertyForm" class="property-form">
         <div class="form-grid">
           <div class="field">
             <label for="listingTitle">عنوان الإعلان</label>
@@ -234,6 +234,6 @@
     <p class="copyright">© <span id="currentYear"></span> سوريا عقارات. جميع الحقوق محفوظة.</p>
   </footer>
 
-  <script src="app.js?v=20261119-2"></script>
+  <script src="app.js?v=20261119-guest1"></script>
 </body>
 </html>
