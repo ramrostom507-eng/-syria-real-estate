@@ -262,11 +262,21 @@
       }
 
       const listingIds = listings.map(p => p.id);
-      const [likesResult, commentsResult, myLikesResult] = listingIds.length ? await Promise.all([
+      const [likesResult, commentsResult, myLikesResult, viewsResult] = listingIds.length ? await Promise.all([
         db.from("listing_likes").select("listing_id").in("listing_id", listingIds),
         db.from("listing_comments").select("listing_id").in("listing_id", listingIds),
-        db.from("listing_likes").select("listing_id").eq("guest_id", socialGuest).in("listing_id", listingIds)
-      ]) : [{data:[]},{data:[]},{data:[]}];
+        db.from("listing_likes").select("listing_id").eq("guest_id", socialGuest).in("listing_id", listingIds),
+        db.from("listing_view_totals").select("listing_id,views,image_views,video_views").in("listing_id", listingIds)
+      ]) : [{data:[]},{data:[]},{data:[]},{data:[]}];
+      const viewCounts = new Map((viewsResult.data || []).map(x => [x.listing_id, {
+        views: Number(x.views || 0), image_views: Number(x.image_views || 0), video_views: Number(x.video_views || 0)
+      }]));
+      if (viewsResult.error) console.warn("تعذر تحميل إحصائيات المشاهدات:", viewsResult.error.message);
+      if (listingIds.length) {
+        const impressionRows = listingIds.map(listing_id => ({ listing_id, event_type: "listing" }));
+        const impressionResult = await db.from("listing_views").insert(impressionRows);
+        if (impressionResult.error) console.warn("تعذر تسجيل مشاهدات الإعلانات:", impressionResult.error.message);
+      }
       if (likesResult.error) console.warn("تعذر تحميل الإعجابات:", likesResult.error.message);
       if (commentsResult.error) console.warn("تعذر تحميل التعليقات:", commentsResult.error.message);
       const likeCounts = new Map(), commentCounts = new Map();
@@ -283,11 +293,11 @@
             const priority = listingIndex === 0 && mediaIndex === 0;
             return `<a class="property-media-item" href="${escapeHTML(url)}" target="_blank" rel="noopener">
               <img src="${escapeHTML(url)}" alt="${escapeHTML(item.alt_text || p.title)}"
-                loading="${priority ? "eager" : "lazy"}" decoding="async"
+                data-track-image="${escapeHTML(item.id)}" loading="${priority ? "eager" : "lazy"}" decoding="async"
                 ${priority ? 'fetchpriority="high"' : ""}></a>`;
           }
           if (item.media_type === "video") {
-            return `<div class="property-media-item"><video src="${escapeHTML(url)}" controls playsinline preload="none"></video></div>`;
+            return `<div class="property-media-item"><video src="${escapeHTML(url)}" data-track-video="${escapeHTML(item.id)}" controls playsinline preload="none"></video></div>`;
           }
           return "";
         });
@@ -321,6 +331,11 @@
               </div>
               <p class="property-description">${escapeHTML(p.description || "")}</p>
               <p class="property-price">${price}</p>
+              <div class="property-view-stats" aria-label="إحصائيات المشاهدة">
+                <span>👁 <strong data-listing-views="${escapeHTML(p.id)}">${(viewCounts.get(p.id)?.views || 0) + 1}</strong> مشاهدة</span>
+                <span>📷 <strong data-image-views="${escapeHTML(p.id)}">${viewCounts.get(p.id)?.image_views || 0}</strong></span>
+                <span>🎬 <strong data-video-views="${escapeHTML(p.id)}">${viewCounts.get(p.id)?.video_views || 0}</strong></span>
+              </div>
               <div class="property-social-actions" aria-label="التفاعل مع الإعلان">
                 <button class="social-action ${myLiked.has(p.id) ? "is-liked" : ""}" type="button" data-like-listing="${escapeHTML(p.id)}" aria-pressed="${myLiked.has(p.id)}">❤️ إعجاب <span data-like-count="${escapeHTML(p.id)}">${likeCounts.get(p.id)||0}</span></button>
                 <button class="social-action" type="button" data-comments-toggle="${escapeHTML(p.id)}">💬 تعليق <span data-comment-count="${escapeHTML(p.id)}">${commentCounts.get(p.id)||0}</span></button>
@@ -344,6 +359,29 @@
           </article>`;
       });
       grid.innerHTML = cards.join("");
+      const recordMediaView = async (mediaId, eventType, listingId) => {
+        const result = await db.from("listing_views").insert({ listing_id: listingId, media_id: mediaId, event_type: eventType });
+        if (result.error) { console.warn("تعذر تسجيل مشاهدة الوسائط:", result.error.message); return; }
+        const counterName = eventType === "image" ? "image" : "video";
+        const counter = grid.querySelector('[data-' + counterName + '-views="' + CSS.escape(listingId) + '"]');
+        if (counter) counter.textContent = String(Number(counter.textContent || 0) + 1);
+      };
+      grid.querySelectorAll("[data-track-image]").forEach(img => {
+        const track = () => {
+          if (img.dataset.viewTracked === "1") return;
+          img.dataset.viewTracked = "1";
+          const listingId = img.closest(".property-post")?.id?.replace("property-", "");
+          if (listingId) recordMediaView(img.dataset.trackImage, "image", listingId);
+        };
+        if (img.complete && img.naturalWidth > 0) track();
+        else img.addEventListener("load", track, { once: true });
+      });
+      grid.querySelectorAll("[data-track-video]").forEach(video => {
+        video.addEventListener("play", () => {
+          const listingId = video.closest(".property-post")?.id?.replace("property-", "");
+          if (listingId) recordMediaView(video.dataset.trackVideo, "video", listingId);
+        });
+      });
       grid.querySelectorAll("[data-like-listing]").forEach(button => button.addEventListener("click", async () => {
         const id=button.dataset.likeListing;
         if(button.getAttribute("aria-pressed")==="true") return;
