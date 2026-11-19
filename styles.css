@@ -984,3 +984,21 @@ button, a {
   .property-post-actions .btn { min-width:120px; font-size:11px; }
   .section#properties .section-heading h2 { font-size:21px; }
 }
+
+
+/* تفاعلات المنشورات: إعجاب وتعليقات بدون تسجيل */
+.property-social-actions{display:flex;gap:8px;border-top:1px solid var(--border);padding:10px 0 2px;margin-top:12px}
+.social-action{flex:1;border:0;background:#f5f7f5;border-radius:9px;padding:11px 7px;color:#34443d;font:inherit;font-size:13px;cursor:pointer}
+.social-action:hover{background:#edf2ed}
+.social-action.is-liked{color:#d12f55;background:#fff0f3;font-weight:700}
+.social-action span{font-variant-numeric:tabular-nums;margin-inline-start:3px}
+.listing-comments{border-top:1px solid var(--border);margin-top:10px;padding-top:12px}
+.listing-comment-form{display:grid;gap:8px}
+.listing-comment-form input,.listing-comment-form textarea{width:100%;border:1px solid var(--border);border-radius:9px;padding:10px;font:inherit;background:#fff}
+.listing-comment-form textarea{resize:vertical}
+.listing-comment-form small{color:#777;font-size:11px}
+.listing-comment-list{display:grid;gap:9px;margin-top:12px}
+.listing-comment{background:#f7f8f6;border-radius:10px;padding:10px 12px}
+.listing-comment p{margin:5px 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}
+.listing-comment small{color:#888;font-size:10px}
+@media(max-width:760px){.social-action{font-size:12px;padding:10px 3px}.property-social-actions{gap:5px}}
