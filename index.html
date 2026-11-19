@@ -23,50 +23,24 @@
     <button class="menu-toggle" id="menuToggle" aria-label="فتح القائمة">☰</button>
 
     <nav class="main-nav" id="mainNav">
-      <a href="#home">الرئيسية</a>
-      <a href="#properties">العقارات</a>
-      <a href="#services">خدماتنا</a>
-      <a href="#ai-assistant">المساعد الذكي</a>
-      <a href="#video-studio">استديو الفيديو</a>
+      <a href="#properties">الإعلانات</a>
+      <a href="#searchForm">بحث</a>
+      <a href="#add-property">نشر إعلان</a>
+      <a href="#login">حسابي</a>
     </nav>
 
     <div class="header-actions">
-      <a class="btn btn-primary" href="#add-property">أضف عقارك</a>
+      <a class="btn btn-primary" href="#add-property">＋ نشر إعلان</a>
+      <a class="btn btn-outline" href="#login">حسابي</a>
       <a class="btn btn-outline" id="adminNavButton" href="#admin-panel" hidden>⚙ الإدارة</a>
     </div>
   </header>
 
   <main>
-    <section class="hero" id="home">
-      <div class="hero-content">
-        <span class="eyebrow">بوابتك إلى السوق العقاري السوري</span>
-        <h1>اعثر على عقارك القادم<br><span>بذكاء وثقة</span></h1>
-        <p>
-          منصة سورية متكاملة للبيع والشراء والإيجار والاستثمار،
-          تجمع المالكين والمشترين والمستأجرين والمكاتب العقارية في مكان واحد.
-        </p>
-        <div class="hero-actions">
-          <a href="#properties" class="btn btn-primary">اكتشف العقارات</a>
-          <a href="#add-property" class="btn btn-light">اعرض عقارك الآن</a>
-        </div>
-      </div>
-
-      <div class="hero-card">
-        <p class="hero-photo-credit">صورة بانورامية لدمشق — Wikimedia Commons، © Vyacheslav Argenberg (CC BY 4.0)</p>
-        <div class="hero-card-top">
-          <span>اكتشف فرصتك العقارية</span>
-          <span class="live-dot">● متاح الآن</span>
-        </div>
-        <div class="hero-symbol">⌂</div>
-        <h2>من دمشق إلى جميع المحافظات</h2>
-        <p>بيع • شراء • إيجار • استثمار</p>
-      </div>
-    </section>
-
-    <section class="search-section" aria-label="البحث عن عقار">
+<section class="search-section" aria-label="البحث عن عقار">
       <div class="section-heading">
-        <span class="eyebrow">بحث سريع</span>
-        <h2>ما العقار الذي تبحث عنه؟</h2>
+        <span class="eyebrow">بحث</span>
+        <h2>ابحث عن عقار</h2>
       </div>
 
       <form id="searchForm" class="search-form">
@@ -122,9 +96,8 @@
     <section class="section" id="properties">
       <div class="section-heading section-heading-row">
         <div>
-          <span class="eyebrow">فرص عقارية</span>
-          <h2>اكتشف العقارات</h2>
-          <p>تصفح العقارات المعروضة في السوق السوري.</p>
+          <span class="eyebrow">أحدث المنشورات</span>
+          <h2>الإعلانات العقارية</h2>
         </div>
         <a href="#add-property" class="text-link">أضف إعلانك ←</a>
       </div>
@@ -134,38 +107,7 @@
       </div>
     </section>
 
-    <section class="services-section" id="services">
-      <div class="section-heading">
-        <span class="eyebrow">كل ما تحتاجه</span>
-        <h2>خدمات عقارية متكاملة</h2>
-        <p>حلول تجمع أطراف السوق العقاري السوري.</p>
-      </div>
-
-      <div class="services-grid">
-        <article class="service-card">
-          <span class="service-icon">⌂</span>
-          <h3>بيع وشراء</h3>
-          <p>اعرض عقارك وابحث عن العقار المناسب لك.</p>
-        </article>
-        <article class="service-card">
-          <span class="service-icon">🔑</span>
-          <h3>الإيجارات</h3>
-          <p>خيارات سكنية وتجارية للمؤجرين والمستأجرين.</p>
-        </article>
-        <article class="service-card">
-          <span class="service-icon">🏢</span>
-          <h3>المكاتب العقارية</h3>
-          <p>مساحة مخصصة للمكاتب والوسطاء العقاريين.</p>
-        </article>
-        <article class="service-card">
-          <span class="service-icon">📈</span>
-          <h3>الاستثمار العقاري</h3>
-          <p>استعرض الفرص والمشاريع العقارية.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="ai-section" id="ai-assistant">
+<section class="ai-section" id="ai-assistant">
       <div class="ai-content">
         <span class="eyebrow">تقنيات الذكاء الاصطناعي</span>
         <h2>تعرّف على مساعدك العقاري الذكي</h2>
@@ -189,23 +131,7 @@
       </div>
     </section>
 
-    <section class="video-section" id="video-studio">
-      <div class="section-heading">
-        <span class="eyebrow">التسويق العقاري الحديث</span>
-        <h2>استديو سوريا عقارات</h2>
-        <p>مساحة مستقبلية لتحويل صور العقارات إلى مواد تسويقية وفيديوهات احترافية.</p>
-      </div>
-
-      <div class="studio-panel">
-        <div class="studio-icon">▶</div>
-        <h3>اصنع فيديو تسويقياً لعقارك</h3>
-        <p>ستتمكن من رفع الصور وإضافة التفاصيل واختيار قالب الفيديو عند تفعيل الاستديو.</p>
-        <a class="btn btn-light" href="#add-property">ابدأ بإضافة عقارك</a>
-        <small>إنشاء الفيديو الفعلي يحتاج إلى ربط خدمة معالجة فيديو.</small>
-      </div>
-    </section>
-
-    <section class="add-section" id="login">
+<section class="add-section" id="login">
       <div class="section-heading">
         <span class="eyebrow">الدخول إلى المنصة</span>
         <h2>تسجيل دخول المدير</h2>
@@ -300,10 +226,10 @@
       <p>منصة عقارية ذكية لخدمة السوق السوري.</p>
     </div>
     <div class="footer-links">
-      <a href="#home">الرئيسية</a>
-      <a href="#properties">العقارات</a>
-      <a href="#services">الخدمات</a>
-      <a href="#add-property">أضف عقارك</a>
+      <a href="#properties">الإعلانات</a>
+      <a href="#searchForm">بحث</a>
+      <a href="#add-property">نشر إعلان</a>
+      <a href="#login">حسابي</a>
     </div>
     <p class="copyright">© <span id="currentYear"></span> سوريا عقارات. جميع الحقوق محفوظة.</p>
   </footer>
