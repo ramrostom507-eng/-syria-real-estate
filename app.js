@@ -558,15 +558,33 @@
       const b=ev.target.closest("button[data-guest-open]");if(!b)return;
       const ad=getGuestAds().find(x=>x.id===b.dataset.guestOpen);if(ad)await openGuestListing(ad.id,ad.token);
     });
+    function inferGuestListing(text){
+      const raw=text.trim();
+      const first=(raw.split(/[\\n،؛.!؟]/).map(x=>x.trim()).find(Boolean)||"").slice(0,120);
+      const governorates=["ريف دمشق","دمشق","حلب","حمص","حماة","اللاذقية","طرطوس","إدلب","درعا","السويداء","القنيطرة","دير الزور","الرقة","الحسكة"];
+      const governorate=governorates.find(x=>raw.includes(x))||"غير محدد";
+      const purpose=/إيجار|للإيجار|للايجار|إيجاراً|مستأجر/.test(raw)?"rent":/استثمار|استثماري/.test(raw)?"investment":"sale";
+      let type="other";
+      if(/شقة/.test(raw))type="apartment";
+      else if(/فيلا|منزل|بيت/.test(raw))type="house";
+      else if(/أرض|ارض/.test(raw))type="land";
+      else if(/محل|تجاري/.test(raw))type="commercial";
+      else if(/مكتب/.test(raw))type="office";
+      else if(/مستودع|هنغار/.test(raw))type="warehouse";
+      const phoneMatch=raw.match(/(?:\\+?\\d[\\d\\s()-]{6,}\\d)/);
+      return {title:first||"إعلان عقاري جديد",governorate,purpose,type,phone:phoneMatch?phoneMatch[0].trim():""};
+    }
     $("propertyForm")?.addEventListener("submit",async ev=>{
       ev.preventDefault();
-      const title=$("listingTitle").value.trim(),governorate=$("listingCity").value,c=$("listingCategory").value.split("|"),phone=$("listingPhone").value.trim(),description=$("listingDetails").value.trim(),files=Array.from($("listingFiles")?.files||[]);
-      if(!title||title.length<5||!governorate||!c[0]||!c[1]||!phone){setMessage("formMessage","أدخل العنوان والمحافظة ونوع الإعلان ورقم التواصل بشكل صحيح.",true);return;}
+      const description=$("listingDetails").value.trim(),files=Array.from($("listingFiles")?.files||[]);
+      if(!description||description.length<5){setMessage("formMessage","اكتب تفاصيل الإعلان أولاً.",true);return;}
       if(files.length>8){setMessage("formMessage","يمكن إرفاق 8 ملفات كحد أقصى.",true);return;}
-      const b=ev.submitter||$("propertyForm").querySelector('button[type="submit"]');if(b)b.disabled=true;setMessage("formMessage","جارٍ إرسال الإعلان...");
+      const inferred=inferGuestListing(description);
+      const b=ev.submitter||$("propertyForm").querySelector('button[type="submit"]');if(b)b.disabled=true;
+      setMessage("formMessage","جارٍ إرسال الإعلان...");
       const token=makeGuestToken();
       try{
-        const r=await db.rpc("guest_create_listing",{p_token:token,p_title:title,p_description:description,p_listing_type:c[0],p_property_type:c[1],p_governorate:governorate,p_contact_phone:phone});
+        const r=await db.rpc("guest_create_listing",{p_token:token,p_title:inferred.title,p_description:description,p_listing_type:inferred.purpose,p_property_type:inferred.type,p_governorate:inferred.governorate,p_contact_phone:inferred.phone});
         if(r.error)throw r.error;
         const id=r.data;saveGuestAd(id,token);
         if(files.length){setMessage("formMessage","تم إرسال بيانات الإعلان. جارٍ رفع الصور والفيديو...");await uploadGuestFiles(id,token,files);}
