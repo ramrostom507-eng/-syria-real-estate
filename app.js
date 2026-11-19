@@ -450,10 +450,43 @@
       }
     });
 
+    let generatedPropertyAd = "";
     $("aiPrepareButton")?.addEventListener("click", () => {
-      const text = $("aiDescription")?.value.trim() || "";
-      if (!text) return setMessage("aiResult", "اكتب وصف العقار أولاً.");
-      setMessage("aiResult", `مسودة وصفك:\n\n${text}\n\nالمعلومات التي يُفضّل استكمالها: المحافظة والمنطقة، السعر والعملة، المساحة، عدد الغرف والحمامات، الطابق، وحالة العقار.\n\nتنبيه: هذه أداة تنظيم نص محلية وليست خدمة ذكاء اصطناعي متصلة حالياً.`);
+      const raw = $("aiDescription")?.value.trim() || "";
+      if (!raw) {
+        setMessage("aiResult", "اكتب وصف العقار أولاً حتى نصنع لك الإعلان.");
+        return;
+      }
+      const clean = raw.replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n");
+      const firstSentence = clean.split(/[.!؟\n]/).map(x => x.trim()).find(Boolean) || "عقار معروض";
+      generatedPropertyAd =
+        "🏡 إعلان عقاري\n" +
+        firstSentence + "\n\n" +
+        "📍 تفاصيل العقار\n" + clean + "\n\n" +
+        "📞 للاستفسار والتواصل\nيرجى التواصل مباشرة مع المعلن عبر بيانات الاتصال المرفقة بالإعلان.\n\n" +
+        "منصة عقارات سوريا — فرصتك العقارية تبدأ من هنا.";
+      const result = $("aiResult");
+      if (result) {
+        result.textContent = generatedPropertyAd +
+          "\n\nقبل النشر، تأكد من إضافة رقم التواصل والمحافظة، وأرفق صوراً واضحة للعقار.";
+        result.style.whiteSpace = "pre-wrap";
+      }
+      if ($("aiCopyButton")) $("aiCopyButton").hidden = false;
+    });
+    $("aiCopyButton")?.addEventListener("click", async () => {
+      if (!generatedPropertyAd) return;
+      try {
+        await navigator.clipboard.writeText(generatedPropertyAd);
+        setMessage("aiResult", generatedPropertyAd + "\n\n✓ تم نسخ الإعلان. يمكنك لصقه في نموذج إضافة العقار.");
+      } catch (_) {
+        const field = document.createElement("textarea");
+        field.value = generatedPropertyAd;
+        document.body.appendChild(field);
+        field.select();
+        const copied = document.execCommand("copy");
+        field.remove();
+        setMessage("aiResult", generatedPropertyAd + (copied ? "\n\n✓ تم نسخ الإعلان." : "\n\nحدد النص وانسخه يدوياً."));
+      }
     });
 
     if ($("currentYear")) $("currentYear").textContent = new Date().getFullYear();
