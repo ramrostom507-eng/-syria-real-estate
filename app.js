@@ -375,6 +375,12 @@
       const mediaPaths = [...new Set(listings.flatMap(p => (p.listing_media || []).map(item => item.storage_path).filter(Boolean)))];
       const signedMap = new Map();
       const listingIds = listings.map(p => p.id);
+      const tourResult = listingIds.length ? await db.from("listing_3d_media").select("id,listing_id,media_kind,storage_path,original_name,status").in("listing_id", listingIds).eq("status","approved") : {data:[],error:null};
+      if (tourResult.error) console.warn("تعذر تحميل الجولات ثلاثية الأبعاد:", tourResult.error.message);
+      const tourRows = tourResult.data || [], tourSigned = new Map(), tourPaths = tourRows.map(x=>x.storage_path).filter(Boolean);
+      for(let i=0;i<tourPaths.length;i+=100){const sr=await db.storage.from("property-3d").createSignedUrls(tourPaths.slice(i,i+100),3600);if(sr.error)console.warn("تعذر إنشاء روابط الجولات:",sr.error.message);(sr.data||[]).forEach(x=>{if(x?.path&&x?.signedUrl)tourSigned.set(x.path,x.signedUrl);});}
+      const toursByListing = new Map();
+      tourRows.forEach(x=>{const url=tourSigned.get(x.storage_path);if(!url)return;if(!toursByListing.has(x.listing_id))toursByListing.set(x.listing_id,[]);toursByListing.get(x.listing_id).push({...x,url});});
       const mediaPromise = (async () => {
         for (let i = 0; i < mediaPaths.length; i += 100) {
           const { data, error } = await db.storage.from(STORAGE_BUCKET).createSignedUrls(mediaPaths.slice(i, i + 100), 604800);
@@ -445,6 +451,8 @@
         const shareUrl = window.location.origin + window.location.pathname + "?listing=" + encodeURIComponent(p.id) + "#property-" + encodeURIComponent(p.id);
         const isSaved = getSavedListingIds().includes(p.id);
         const guestOwner = getGuestAds().some(x=>x.id===p.id);
+        const tours = toursByListing.get(p.id) || [];
+        const tourMarkup = tours.length ? '<div class="property-3d-actions"><strong>استكشف العقار بشكل تفاعلي</strong>' + tours.map(t => '<button type="button" class="btn btn-outline" data-open-3d data-3d-kind="'+escapeHTML(t.media_kind)+'" data-3d-url="'+escapeHTML(t.url)+'">'+(t.media_kind==="panorama360"?"🌐 جولة 360°":"🏠 عرض ثلاثي الأبعاد")+'</button>').join("") + '</div>' : "";
         const whatsapp = `https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`;
         return `
           <article id="property-${escapeHTML(p.id)}" class="property-card property-post">
@@ -464,6 +472,7 @@
               </div>
             </div>
             ${mediaMarkup}
+            ${tourMarkup}
             <div class="property-info">
               <div class="property-meta">
                 <span>${escapeHTML(typeLabel[p.property_type] || p.property_type || "عقار")}</span>
@@ -500,6 +509,20 @@
           </article>`;
       });
       grid.innerHTML = cards.join("");
+      grid.querySelectorAll("[data-open-3d]").forEach(button => button.addEventListener("click", () => {
+        const kind=button.dataset["3dKind"], url=button.dataset["3dUrl"];
+        let modal=document.getElementById("property3dModal");
+        if(!modal){modal=document.createElement("div");modal.id="property3dModal";modal.className="property-3d-modal";modal.innerHTML='<div class="property-3d-dialog" role="dialog" aria-modal="true" aria-label="استكشاف العقار"><button type="button" class="property-3d-close" aria-label="إغلاق">×</button><div id="property3dViewer" class="property-3d-viewer"></div></div>';document.body.appendChild(modal);modal.querySelector(".property-3d-close").addEventListener("click",()=>{modal.hidden=true;modal.querySelector("#property3dViewer").innerHTML="";});modal.addEventListener("click",e=>{if(e.target===modal){modal.hidden=true;modal.querySelector("#property3dViewer").innerHTML="";}});}
+        const viewer=modal.querySelector("#property3dViewer");viewer.innerHTML="";
+        if(kind==="panorama360"){
+          const canvas=document.createElement("div");canvas.id="property3dPanorama";canvas.style.cssText="width:100%;height:min(72vh,680px);";viewer.appendChild(canvas);
+          if(window.pannellum?.viewer)window.pannellum.viewer("property3dPanorama",{type:"equirectangular",panorama:url,autoLoad:true,showZoomCtrl:true,compass:true});
+          else{const img=document.createElement("img");img.src=url;img.alt="صورة بانورامية 360 درجة";img.style.cssText="width:100%;height:100%;object-fit:contain";viewer.replaceChildren(img);}
+        }else{
+          const model=document.createElement("model-viewer");model.setAttribute("src",url);model.setAttribute("camera-controls","");model.setAttribute("auto-rotate","");model.setAttribute("ar","");model.setAttribute("shadow-intensity","1");model.style.cssText="width:100%;height:min(72vh,680px);background:#f4f6f5";viewer.appendChild(model);
+        }
+        modal.hidden=false;
+      }));
       renderSavedListings();
       const recordMediaView = async (mediaId, eventType, listingId) => {
         const store = readViewDedupe();
@@ -993,9 +1016,24 @@
       const phone = phoneCandidates[0]?.value || null;
       return {title:first||"إعلان عقاري جديد",governorate,purpose,type,phone};
     }
+    async function uploadGuest3DFiles(listingId,token,panorama,model){
+      const files=[];if(panorama)files.push({file:panorama,kind:"panorama360"});if(model)files.push({file:model,kind:"model3d"});
+      for(const item of files){
+        const file=item.file,ext=(file.name.split(".").pop()||"").toLowerCase(),allowed=item.kind==="panorama360"?["jpg","jpeg","png","webp"]:["glb","gltf"];
+        if(!allowed.includes(ext))throw new Error(item.kind==="panorama360"?"صورة الجولة يجب أن تكون JPG أو PNG أو WEBP.":"النموذج يجب أن يكون GLB أو GLTF.");
+        if(file.size>MAX_FILE_SIZE)throw new Error("ملف 3D يتجاوز الحد الحالي 50 ميغابايت.");
+        const path="guest/"+listingId+"/"+token+"/"+crypto.randomUUID()+"."+ext;
+        const mime=file.type||(item.kind==="model3d"?(ext==="glb"?"model/gltf-binary":"model/gltf+json"):"image/jpeg");
+        const up=await db.storage.from("property-3d").upload(path,file,{cacheControl:"3600",upsert:false,contentType:mime});
+        if(up.error)throw up.error;
+        const linked=await db.rpc("guest_add_3d_media",{p_listing_id:listingId,p_token:token,p_storage_path:path,p_media_kind:item.kind,p_original_name:file.name});
+        if(linked.error){await db.storage.from("property-3d").remove([path]);throw linked.error;}
+      }
+    }
     $("propertyForm")?.addEventListener("submit",async ev=>{
       ev.preventDefault();
       const description=$("listingDetails").value.trim(),files=Array.from($("listingFiles")?.files||[]);
+      const panorama=$("listingPanoramaFile")?.files?.[0]||null,model=$("listingModelFile")?.files?.[0]||null;
       if(!description||description.length<5){setMessage("formMessage","اكتب تفاصيل الإعلان أولاً.",true);return;}
       if(files.length>8){setMessage("formMessage","يمكن إرفاق 8 ملفات كحد أقصى.",true);return;}
       const inferred=inferGuestListing(description);
@@ -1007,7 +1045,8 @@
         if(r.error)throw r.error;
         const id=r.data;saveGuestAd(id,token);
         if(files.length){setMessage("formMessage","تم إرسال بيانات الإعلان. جارٍ رفع الصور والفيديو...");await uploadGuestFiles(id,token,files);}
-        $("propertyForm").reset();setMessage("formMessage","تم استلام إعلانك بنجاح. سيظهر بعد موافقة الإدارة، وستجده في قسم «إعلاناتي» على هذا الجهاز.");
+        if(panorama||model){setMessage("formMessage","جارٍ رفع الجولة أو النموذج ثلاثي الأبعاد...");await uploadGuest3DFiles(id,token,panorama,model);}
+        $("propertyForm").reset();setMessage("formMessage","تم استلام إعلانك بنجاح. سيظهر الإعلان والجولة ثلاثية الأبعاد بعد موافقة الإدارة.");
         await renderMyGuestAds();await loadListings();
         $("my-listings")?.scrollIntoView({behavior:"smooth",block:"center"});
       }catch(err){console.error(err);setMessage("formMessage","تعذر إكمال النشر: "+(err.message||"خطأ غير معروف")+". إعلانك قد يكون محفوظاً؛ افتح قسم إعلاناتي لإكماله.",true);await renderMyGuestAds();}
