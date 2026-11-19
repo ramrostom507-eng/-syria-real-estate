@@ -85,8 +85,8 @@
     if (loginSection) {
       loginSection.innerHTML = `
         <div>
-          <span class="eyebrow">حسابك العقاري</span>
-          <h2>حسابك على سوريا عقارات</h2>
+          <span class="eyebrow">دخول الإدارة</span>
+          <h2>لوحة إدارة سوريا عقارات</h2>
           <p>هذا الدخول للمدير فقط. يمكنك نشر إعلانك وتعديله دون حساب.</p>
         </div>
         <div style="max-width:430px;width:100%">
