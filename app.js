@@ -314,14 +314,29 @@
         panel.textContent = "تعذر تحميل الطلبات: " + error.message;
         return;
       }
-      if (!data?.length) {
-        panel.textContent = "لا توجد طلبات نشر معلّقة حالياً.";
-        return;
-      }
+      const { data: allListings, error: allError } = await db.from("listings")
+        .select("id,title,status").in("status", ["approved","pending"])
+        .order("created_at", { ascending: false });
+      const uploadOptions = !allError && allListings?.length
+        ? allListings.map(x => `<option value="${escapeHTML(x.id)}">${escapeHTML(x.title)} — ${x.status === "approved" ? "منشور" : "قيد المراجعة"}</option>`).join("")
+        : "";
       panel.innerHTML = `
         <div style="display:grid;gap:14px">
-          <h3>طلبات النشر المعلقة (${data.length})</h3>
-          ${data.map(p => `
+          <section class="property-card" style="padding:16px">
+            <h3>إضافة صور إلى إعلان موجود</h3>
+            <p>اختر الإعلان ثم ارفع الصور الأصلية من جهازك. ستظهر الصور على الإعلان بعد اكتمال الرفع.</p>
+            <form id="adminMediaForm" style="display:grid;gap:10px">
+              <label for="adminMediaListing">الإعلان</label>
+              <select id="adminMediaListing" required>${uploadOptions}</select>
+              <label for="adminMediaFiles">صور أو فيديو العقار</label>
+              <input id="adminMediaFiles" type="file" accept="image/*,video/*" multiple required>
+              <small>حتى 8 ملفات في المرة الواحدة، وحجم أقصى 50 ميغابايت للملف.</small>
+              <button class="btn btn-primary" type="submit" ${uploadOptions ? "" : "disabled"}>رفع وربط الصور بالإعلان</button>
+              <p id="adminMediaMessage" aria-live="polite"></p>
+            </form>
+          </section>
+          <h3>طلبات النشر المعلقة (${data?.length || 0})</h3>
+          ${data?.length ? data.map(p => `
             <article class="property-card" style="padding:16px">
               <h3>${escapeHTML(p.title)}</h3>
               <p>${escapeHTML(p.governorate || "")} — ${escapeHTML(p.city || "")}</p>
@@ -334,8 +349,52 @@
                 <button class="btn btn-primary" type="button" data-listing-action="approve" data-listing-id="${escapeHTML(p.id)}">✓ موافقة ونشر</button>
                 <button class="btn btn-outline" type="button" data-listing-action="reject" data-listing-id="${escapeHTML(p.id)}">رفض الطلب</button>
               </div>
-            </article>`).join("")}
+            </article>`).join("") : "<p>لا توجد طلبات نشر معلّقة حالياً.</p>"}
         </div>`;
+      $("adminMediaForm")?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (!isAdmin) return;
+        const listingId = $("adminMediaListing")?.value;
+        const files = Array.from($("adminMediaFiles")?.files || []);
+        const msg = $("adminMediaMessage");
+        const submit = event.submitter;
+        if (!listingId || !files.length) return;
+        if (files.length > 8) {
+          if (msg) msg.textContent = "يمكن رفع 8 ملفات كحد أقصى في المرة الواحدة.";
+          return;
+        }
+        if (submit) submit.disabled = true;
+        if (msg) msg.textContent = "جارٍ رفع الصور وربطها بالإعلان...";
+        try {
+          const rows = [];
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) throw new Error("نوع ملف غير مدعوم: " + file.name);
+            if (file.size > MAX_FILE_SIZE) throw new Error("حجم الملف أكبر من 50 ميغابايت: " + file.name);
+            const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+            const path = `admin/${listingId}/${Date.now()}-${i}-${safeName}`;
+            const { error: uploadError } = await db.storage.from(STORAGE_BUCKET).upload(path, file, {
+              cacheControl: "3600", upsert: false, contentType: file.type
+            });
+            if (uploadError) throw uploadError;
+            rows.push({
+              listing_id: listingId, owner_id: null,
+              media_type: file.type.startsWith("image/") ? "image" : "video",
+              storage_path: path, sort_order: i, alt_text: file.name
+            });
+          }
+          const { error: insertError } = await db.from("listing_media").insert(rows);
+          if (insertError) throw insertError;
+          if (msg) msg.textContent = "تم رفع " + rows.length + " ملفات وربطها بالإعلان بنجاح.";
+          $("adminMediaForm").reset();
+          await loadListings();
+        } catch (error) {
+          console.error("admin media upload:", error);
+          if (msg) msg.textContent = "تعذر إكمال الرفع: " + (error.message || "خطأ غير معروف");
+        } finally {
+          if (submit) submit.disabled = false;
+        }
+      });
     }
 
     $("adminMessage")?.addEventListener("click", async (event) => {
