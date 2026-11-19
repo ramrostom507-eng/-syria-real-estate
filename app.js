@@ -578,7 +578,7 @@
     });
     function inferGuestListing(text){
       const raw=text.trim();
-      const first=(raw.split(/[\\n،؛.!؟]/).map(x=>x.trim()).find(Boolean)||"").slice(0,120);
+      const first=(raw.split(/[\n،؛.!؟]/).map(x=>x.trim()).find(Boolean)||"").slice(0,120);
       const governorates=["ريف دمشق","دمشق","حلب","حمص","حماة","اللاذقية","طرطوس","إدلب","درعا","السويداء","القنيطرة","دير الزور","الرقة","الحسكة"];
       const governorate=governorates.find(x=>raw.includes(x))||"غير محدد";
       const purpose=/إيجار|للإيجار|للايجار|إيجاراً|مستأجر/.test(raw)?"rent":/استثمار|استثماري/.test(raw)?"investment":"sale";
@@ -589,8 +589,12 @@
       else if(/محل|تجاري/.test(raw))type="commercial";
       else if(/مكتب/.test(raw))type="office";
       else if(/مستودع|هنغار/.test(raw))type="warehouse";
-      const phoneMatch=raw.match(/\\+?\\d[\\d\\s()-]{6,}\\d/);
-      return {title:first||"إعلان عقاري جديد",governorate,purpose,type,phone:phoneMatch?phoneMatch[0].trim():""};
+      const westernDigits = raw
+        .replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
+        .replace(/[۰-۹]/g, d => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)));
+      const phoneMatch = westernDigits.match(/(?:\+|00)?\d[\d\s().-]{5,}\d/);
+      const phone = phoneMatch ? phoneMatch[0].replace(/[^\d+]/g, "") : null;
+      return {title:first||"إعلان عقاري جديد",governorate,purpose,type,phone};
     }
     $("propertyForm")?.addEventListener("submit",async ev=>{
       ev.preventDefault();
