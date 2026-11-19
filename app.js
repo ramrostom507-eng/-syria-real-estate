@@ -231,20 +231,38 @@
         return;
       }
 
-      const cards = await Promise.all(listings.map(async (p) => {
-        const media = [...(p.listing_media || [])].sort((a,b) => (a.sort_order || 0) - (b.sort_order || 0));
-        const mediaItems = await Promise.all(media.map(async (item) => {
-          const url = await signedMediaUrl(item.storage_path);
+      // أنشئ روابط الصور دفعة واحدة بدلاً من طلب رابط مستقل لكل صورة.
+      const mediaPaths = [...new Set(listings.flatMap(p =>
+        (p.listing_media || []).map(item => item.storage_path).filter(Boolean)
+      ))];
+      const signedMap = new Map();
+      if (mediaPaths.length) {
+        const { data, error } = await db.storage.from(STORAGE_BUCKET)
+          .createSignedUrls(mediaPaths, 3600);
+        if (error) console.warn("تعذر إنشاء روابط الصور دفعة واحدة:", error.message);
+        (data || []).forEach(item => {
+          if (item?.path && item?.signedUrl) signedMap.set(item.path, item.signedUrl);
+        });
+      }
+
+      const cards = listings.map((p, listingIndex) => {
+        const media = [...(p.listing_media || [])]
+          .sort((a,b) => (a.sort_order || 0) - (b.sort_order || 0));
+        const mediaItems = media.map((item, mediaIndex) => {
+          const url = signedMap.get(item.storage_path) || "";
           if (!url) return "";
           if (item.media_type === "image") {
+            const priority = listingIndex === 0 && mediaIndex === 0;
             return `<a class="property-media-item" href="${escapeHTML(url)}" target="_blank" rel="noopener">
-              <img src="${escapeHTML(url)}" alt="${escapeHTML(item.alt_text || p.title)}" loading="lazy"></a>`;
+              <img src="${escapeHTML(url)}" alt="${escapeHTML(item.alt_text || p.title)}"
+                loading="${priority ? "eager" : "lazy"}" decoding="async"
+                ${priority ? 'fetchpriority="high"' : ""}></a>`;
           }
           if (item.media_type === "video") {
-            return `<div class="property-media-item"><video src="${escapeHTML(url)}" controls playsinline preload="metadata"></video></div>`;
+            return `<div class="property-media-item"><video src="${escapeHTML(url)}" controls playsinline preload="none"></video></div>`;
           }
           return "";
-        }));
+        });
         const gallery = mediaItems.filter(Boolean).join("");
         const mediaMarkup = gallery
           ? `<div class="property-media-gallery" aria-label="صور وفيديوهات العقار">${gallery}</div>`
@@ -269,7 +287,7 @@
             ${mediaMarkup}
             <div class="property-info">
               <div class="property-meta">
-                <span> ${escapeHTML(typeLabel[p.property_type] || p.property_type || "عقار")}</span>
+                <span>${escapeHTML(typeLabel[p.property_type] || p.property_type || "عقار")}</span>
                 ${p.area_m2 ? `<span>${escapeHTML(p.area_m2)} م²</span>` : ""}
                 ${p.bedrooms ? `<span>${escapeHTML(p.bedrooms)} غرف</span>` : ""}
               </div>
@@ -282,7 +300,7 @@
               ${media.length ? `<small class="media-count">📷 ${media.filter(x => x.media_type === "image").length} صور · 🎥 ${media.filter(x => x.media_type === "video").length} فيديو</small>` : ""}
             </div>
           </article>`;
-      }));
+      });
       grid.innerHTML = cards.join("");
     }
 
