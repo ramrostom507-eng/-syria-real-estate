@@ -1023,7 +1023,7 @@
         if(!allowed.includes(ext))throw new Error(item.kind==="panorama360"?"صورة الجولة يجب أن تكون JPG أو PNG أو WEBP.":"النموذج يجب أن يكون GLB أو GLTF.");
         if(file.size>MAX_FILE_SIZE)throw new Error("ملف 3D يتجاوز الحد الحالي 50 ميغابايت.");
         const path="guest/"+listingId+"/"+token+"/"+crypto.randomUUID()+"."+ext;
-        const mime=file.type||(item.kind==="model3d"?(ext==="glb"?"model/gltf-binary":"model/gltf+json"):"image/jpeg");
+        const mime=item.kind==="model3d"?(ext==="glb"?"model/gltf-binary":"model/gltf+json"):(ext==="png"?"image/png":ext==="webp"?"image/webp":"image/jpeg");
         const up=await db.storage.from("property-3d").upload(path,file,{cacheControl:"3600",upsert:false,contentType:mime});
         if(up.error)throw up.error;
         const linked=await db.rpc("guest_add_3d_media",{p_listing_id:listingId,p_token:token,p_storage_path:path,p_media_kind:item.kind,p_original_name:file.name});
