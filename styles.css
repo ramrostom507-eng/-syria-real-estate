@@ -1272,3 +1272,19 @@ button, a {
   .property-post-head .property-badge{display:none}
   .property-media-item{height:225px !important}
 }
+
+
+/* استوديو الجولات ثلاثية الأبعاد */
+.property-3d-studio{border:1px solid #d9e4df;border-radius:14px;padding:15px;background:#f8fbf9}
+.property-3d-studio h3{color:#174f3c;margin:0 0 12px}
+.property-3d-studio .field{margin:10px 0}
+.property-3d-studio small{display:block;color:#65736d;line-height:1.7;margin-top:5px}
+.property-3d-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;background:#f6faf7;border-top:1px solid #e5ece7}
+.property-3d-actions strong{font-size:12px;color:#174f3c}
+.property-3d-actions .btn{font-size:12px;padding:8px 12px}
+.property-3d-modal{position:fixed;inset:0;z-index:99999;background:rgba(9,20,17,.88);display:flex;align-items:center;justify-content:center;padding:16px}
+.property-3d-modal[hidden]{display:none}
+.property-3d-dialog{position:relative;width:min(100%,1100px);background:#fff;border-radius:16px;padding:42px 12px 12px;box-shadow:0 18px 70px #0007}
+.property-3d-close{position:absolute;top:7px;left:10px;border:0;border-radius:50%;width:34px;height:34px;font-size:25px;line-height:1;background:#edf2ef;color:#183a31;cursor:pointer}
+.property-3d-viewer{width:100%;min-height:260px;overflow:hidden;border-radius:10px}
+@media(max-width:600px){.property-3d-modal{padding:7px}.property-3d-dialog{padding:42px 7px 7px}.property-3d-actions{padding:9px}.property-3d-actions strong{width:100%}}
