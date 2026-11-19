@@ -417,10 +417,15 @@
         const button=form.querySelector('button[type="submit"]');button.disabled=true;
         const r=await db.from("listing_comments").insert({listing_id:id,guest_id:socialGuest,display_name:displayName,body});
         if(r.error){alert("تعذر نشر التعليق: "+r.error.message);button.disabled=false;return;}
-        form.reset();
         const list=grid.querySelector('[data-comment-list="'+CSS.escape(id)+'"]');
-        const refreshed=await db.from("listing_comments").select("id,display_name,body,created_at").eq("listing_id",id).order("created_at",{ascending:false}).limit(100);
-        if(!refreshed.error) list.innerHTML=(refreshed.data||[]).map(x=>'<article class="listing-comment"><strong>'+escapeHTML(x.display_name||"زائر")+'</strong><p>'+escapeHTML(x.body)+'</p><small>'+new Date(x.created_at).toLocaleString("ar")+'</small></article>').join("");
+        if(list){
+          const item=document.createElement("article"); item.className="listing-comment";
+          const author=document.createElement("strong"); author.textContent=displayName;
+          const message=document.createElement("p"); message.textContent=body;
+          const time=document.createElement("small"); time.textContent=new Date().toLocaleString("ar");
+          item.append(author,message,time); list.prepend(item);
+        }
+        form.reset();
         const counter=grid.querySelector('[data-comment-count="'+CSS.escape(id)+'"]');
         if(counter)counter.textContent=String(Number(counter.textContent||0)+1);
         button.disabled=false;
