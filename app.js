@@ -597,9 +597,10 @@
         try {
           const rows = [];
           for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) throw new Error("نوع ملف غير مدعوم: " + file.name);
-            if (file.size > MAX_FILE_SIZE) throw new Error("حجم الملف أكبر من 50 ميغابايت: " + file.name);
+            const original = files[i];
+            const file = original.type.startsWith("image/") ? await prepareImageForUpload(original) : original;
+            if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) throw new Error("نوع ملف غير مدعوم: " + original.name);
+            if (file.size > MAX_FILE_SIZE) throw new Error("حجم الملف أكبر من 50 ميغابايت: " + original.name);
             const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
             const path = `admin/${listingId}/${Date.now()}-${i}-${safeName}`;
             const { error: uploadError } = await db.storage.from(STORAGE_BUCKET).upload(path, file, {
@@ -609,7 +610,7 @@
             rows.push({
               listing_id: listingId, owner_id: null,
               media_type: file.type.startsWith("image/") ? "image" : "video",
-              storage_path: path, sort_order: i, alt_text: file.name
+              storage_path: path, sort_order: i, alt_text: original.name
             });
           }
           const { error: insertError } = await db.from("listing_media").insert(rows);
@@ -658,11 +659,12 @@
     async function uploadFiles(files, listingId) {
       const rows = [];
       for (let index = 0; index < files.length; index++) {
-        const file = files[index];
-        const isImage = file.type.startsWith("image/");
-        const isVideo = file.type.startsWith("video/");
-        if (!isImage && !isVideo) throw new Error(`الملف ${file.name} ليس صورة أو فيديو مدعوماً.`);
-        if (file.size > MAX_FILE_SIZE) throw new Error(`حجم الملف ${file.name} أكبر من 50 ميغابايت.`);
+        const original = files[index];
+        const isImage = original.type.startsWith("image/");
+        const isVideo = original.type.startsWith("video/");
+        const file = isImage ? await prepareImageForUpload(original) : original;
+        if (!isImage && !isVideo) throw new Error(`الملف ${original.name} ليس صورة أو فيديو مدعوماً.`);
+        if (file.size > MAX_FILE_SIZE) throw new Error(`حجم الملف ${original.name} أكبر من 50 ميغابايت.`);
         const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
         const path = `${currentUser.id}/${listingId}/${Date.now()}-${index}-${safeName}`;
         const { error: uploadError } = await db.storage.from(STORAGE_BUCKET).upload(path, file, {
