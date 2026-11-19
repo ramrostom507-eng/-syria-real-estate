@@ -244,75 +244,50 @@
         <div class="form-grid">
           <div class="field">
             <label for="listingTitle">عنوان الإعلان</label>
-            <input id="listingTitle" required maxlength="120" placeholder="مثلاً: شقة للبيع في دمشق">
-          </div>
-          <div class="field">
-            <label for="listingPurpose">نوع العملية</label>
-            <select id="listingPurpose" required>
-              <option value="">اختر</option>
-              <option>بيع</option>
-              <option>إيجار</option>
-              <option>استثمار</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="listingType">نوع العقار</label>
-            <select id="listingType" required>
-              <option value="">اختر</option>
-              <option>شقة</option>
-              <option>منزل</option>
-              <option>فيلا</option>
-              <option>أرض</option>
-              <option>محل تجاري</option>
-              <option>مكتب</option>
-              <option>مستودع</option>
-              <option>عقار آخر</option>
-            </select>
+            <input id="listingTitle" required maxlength="120" placeholder="مثلاً: شقة للبيع في دمشق — المزة">
           </div>
           <div class="field">
             <label for="listingCity">المحافظة</label>
             <select id="listingCity" required>
               <option value="">اختر المحافظة</option>
-              <option>دمشق</option>
-              <option>ريف دمشق</option>
-              <option>حلب</option>
-              <option>حمص</option>
-              <option>حماة</option>
-              <option>اللاذقية</option>
-              <option>طرطوس</option>
-              <option>إدلب</option>
-              <option>درعا</option>
-              <option>السويداء</option>
-              <option>القنيطرة</option>
-              <option>دير الزور</option>
-              <option>الرقة</option>
-              <option>الحسكة</option>
+              <option>دمشق</option><option>ريف دمشق</option><option>حلب</option>
+              <option>حمص</option><option>حماة</option><option>اللاذقية</option>
+              <option>طرطوس</option><option>إدلب</option><option>درعا</option>
+              <option>السويداء</option><option>القنيطرة</option><option>دير الزور</option>
+              <option>الرقة</option><option>الحسكة</option>
             </select>
           </div>
           <div class="field">
-            <label for="listingPrice">السعر (اختياري)</label>
-            <input id="listingPrice" inputmode="decimal" placeholder="أدخل السعر إن رغبت">
+            <label for="listingCategory">نوع الإعلان</label>
+            <select id="listingCategory" required>
+              <option value="">اختر نوع الإعلان</option>
+              <option value="sale|apartment">شقة للبيع</option>
+              <option value="rent|apartment">شقة للإيجار</option>
+              <option value="sale|house">منزل أو فيلا للبيع</option>
+              <option value="rent|house">منزل أو فيلا للإيجار</option>
+              <option value="sale|land">أرض للبيع</option>
+              <option value="investment|land">أرض للاستثمار</option>
+              <option value="sale|commercial">محل تجاري للبيع</option>
+              <option value="rent|commercial">محل تجاري للإيجار</option>
+              <option value="sale|office">مكتب للبيع</option>
+              <option value="rent|office">مكتب للإيجار</option>
+              <option value="sale|warehouse">مستودع للبيع</option>
+              <option value="rent|warehouse">مستودع للإيجار</option>
+              <option value="investment|other">فرصة استثمارية أخرى</option>
+            </select>
           </div>
           <div class="field">
             <label for="listingPhone">رقم التواصل</label>
-            <input id="listingPhone" type="tel" required placeholder="رقم الهاتف">
+            <input id="listingPhone" type="tel" required placeholder="رقم الهاتف أو واتساب">
           </div>
         </div>
-
         <div class="field">
-          <label for="listingDetails">تفاصيل العقار</label>
-          <textarea id="listingDetails" rows="5" required placeholder="المساحة، عدد الغرف، المنطقة، الطابق، والمواصفات..."></textarea>
+          <label for="listingDetails">تفاصيل إضافية (اختياري)</label>
+          <textarea id="listingDetails" rows="3" placeholder="اكتب السعر والمساحة وعدد الغرف والمنطقة وأي معلومات تهم المشتري..."></textarea>
         </div>
-
-        <div class="field">
-          <label for="listingMedia">صور العقار أو الفيديو</label>
-          <input id="listingMedia" type="file" accept="image/*,video/*" multiple>
-          <small>رفع الصور والفيديو قيد التجهيز؛ يمكنك إرسال بيانات العقار الآن دون حساب.</small>
-        </div>
-
         <button class="btn btn-primary" type="submit">إرسال الإعلان للمراجعة</button>
         <p id="formMessage" class="form-message" aria-live="polite"></p>
-        <small>لا تحتاج إلى إنشاء حساب. لن يظهر الإعلان للعامة قبل مراجعة الإدارة والموافقة عليه.</small>
+        <small>إعلانك لا يظهر للعامة إلا بعد مراجعة الإدارة والموافقة عليه.</small>
       </form>
     </section>
 
