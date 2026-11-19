@@ -1002,3 +1002,8 @@ button, a {
 .listing-comment p{margin:5px 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}
 .listing-comment small{color:#888;font-size:10px}
 @media(max-width:760px){.social-action{font-size:12px;padding:10px 3px}.property-social-actions{gap:5px}}
+
+/* عدادات مشاهدات الإعلانات والوسائط */
+.property-view-stats{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:9px 0 2px;padding:9px 11px;background:#f5f7f5;border-radius:9px;color:#52635a;font-size:12px}
+.property-view-stats span{white-space:nowrap}
+.property-view-stats strong{color:#183d32;font-variant-numeric:tabular-nums}
