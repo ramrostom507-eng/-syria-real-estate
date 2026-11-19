@@ -237,11 +237,19 @@
       ))];
       const signedMap = new Map();
       if (mediaPaths.length) {
-        const { data, error } = await db.storage.from(STORAGE_BUCKET)
-          .createSignedUrls(mediaPaths, 3600);
-        if (error) console.warn("تعذر إنشاء روابط الصور دفعة واحدة:", error.message);
-        (data || []).forEach(item => {
-          if (item?.path && item?.signedUrl) signedMap.set(item.path, item.signedUrl);
+        // قسّم الطلبات إلى دفعات صغيرة حتى لا يفشل إنشاء الروابط عند كثرة الإعلانات والصور.
+        const batches = [];
+        for (let i = 0; i < mediaPaths.length; i += 100) {
+          batches.push(mediaPaths.slice(i, i + 100));
+        }
+        const results = await Promise.all(batches.map(paths =>
+          db.storage.from(STORAGE_BUCKET).createSignedUrls(paths, 3600)
+        ));
+        results.forEach(({ data, error }) => {
+          if (error) console.warn("تعذر إنشاء بعض روابط الصور:", error.message);
+          (data || []).forEach(item => {
+            if (item?.path && item?.signedUrl) signedMap.set(item.path, item.signedUrl);
+          });
         });
       }
 
