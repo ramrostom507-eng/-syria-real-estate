@@ -532,7 +532,7 @@
        '<div class="field"><label>تفاصيل العقار</label><textarea id="guestEditDescription" rows="4">'+escapeHTML(p.description||"")+'</textarea></div></section>'+
        '<section class="guest-edit-group"><h4>2 — الموقع ونوع الإعلان</h4><div class="field"><label>المحافظة</label><select id="guestEditGovernorate" required>'+guestOptions(guestGovernorates.map(v=>[v,v]),p.governorate)+'</select></div>'+
        '<div class="field"><label>نوع الإعلان</label><select id="guestEditCategory" required>'+guestOptions(guestCategories,p.listing_type+"|"+p.property_type)+'</select></div></section>'+
-       '<section class="guest-edit-group"><h4>3 — التواصل والصور</h4><div class="field"><label>رقم التواصل</label><input id="guestEditPhone" type="tel" required value="'+escapeHTML(p.contact_phone||"")+'"></div>'+
+       '<section class="guest-edit-group"><h4>3 — التواصل والصور</h4><div class="field"><label>رقم التواصل</label><input id="guestEditPhone" type="tel" value="'+escapeHTML(p.contact_phone||"")+'"></div>'+
        '<div class="field"><label>الصور والفيديو الحالية</label><div class="guest-media-edit-list" style="display:flex;gap:10px;flex-wrap:wrap">'+(mediaCards.join("")||'<small>لا توجد صور مرفقة حالياً.</small>')+'</div></div>'+
        '<div class="field"><label>إضافة صور أو فيديو جديد</label><input id="guestEditFiles" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple><small>يمكن إضافة حتى 8 ملفات في كل مرة، 50 ميغابايت للملف.</small></div></section>'+
        '<div class="guest-edit-actions"><button class="btn btn-primary" type="submit">حفظ التعديلات</button><button class="btn btn-outline" id="guestDeleteButton" type="button">حذف الإعلان كاملاً</button></div><p id="guestEditMessage" aria-live="polite"></p></form></div>';
@@ -589,7 +589,7 @@
       else if(/محل|تجاري/.test(raw))type="commercial";
       else if(/مكتب/.test(raw))type="office";
       else if(/مستودع|هنغار/.test(raw))type="warehouse";
-      const phoneMatch=raw.match(/(?:\\+?\\d[\\d\\s()-]{6,}\\d)/);
+      const phoneMatch=raw.match(/\\+?\\d[\\d\\s()-]{6,}\\d/);
       return {title:first||"إعلان عقاري جديد",governorate,purpose,type,phone:phoneMatch?phoneMatch[0].trim():""};
     }
     $("propertyForm")?.addEventListener("submit",async ev=>{
