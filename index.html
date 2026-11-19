@@ -165,38 +165,23 @@
       <div class="section-heading">
         <span class="eyebrow">أضف إعلانك</span>
         <h2>انشر عقارك بسهولة — دون تسجيل حساب</h2>
-        <p>عنوان ومحافظة وباقي التفاصيل بمكان واحد. ننشر إعلانك بعد مراجعة الإدارة.</p>
+        <p>باب للتفاصيل وباب للصور والفيديو فقط. ننشر إعلانك بعد مراجعة الإدارة.</p>
       </div>
 
       <form id="propertyForm" class="property-form">
         <section class="guest-edit-group">
-          <h3>بيانات إعلانك</h3>
-          <div class="field"><label for="listingTitle">عنوان الإعلان</label>
-            <input id="listingTitle" required maxlength="120" placeholder="مثلاً: شقة للبيع في دمشق — المزة"></div>
-          <div class="field"><label for="listingCity">المحافظة</label>
-            <select id="listingCity" required>
-              <option value="">اختر المحافظة</option>
-              <option>دمشق</option><option>ريف دمشق</option><option>حلب</option><option>حمص</option><option>حماة</option><option>اللاذقية</option><option>طرطوس</option><option>إدلب</option><option>درعا</option><option>السويداء</option><option>القنيطرة</option><option>دير الزور</option><option>الرقة</option><option>الحسكة</option>
-            </select></div>
-          <div class="field"><label for="listingCategory">نوع العقار والإعلان</label>
-            <select id="listingCategory" required>
-              <option value="">اختر النوع</option>
-              <option value="sale|apartment">شقة للبيع</option><option value="rent|apartment">شقة للإيجار</option>
-              <option value="sale|house">منزل أو فيلا للبيع</option><option value="rent|house">منزل أو فيلا للإيجار</option>
-              <option value="sale|land">أرض للبيع</option><option value="investment|land">أرض للاستثمار</option>
-              <option value="sale|commercial">محل تجاري للبيع</option><option value="rent|commercial">محل تجاري للإيجار</option>
-              <option value="sale|office">مكتب للبيع</option><option value="rent|office">مكتب للإيجار</option>
-              <option value="sale|warehouse">مستودع للبيع</option><option value="rent|warehouse">مستودع للإيجار</option>
-              <option value="investment|other">فرصة استثمارية أخرى</option>
-            </select></div>
-          <div class="field"><label for="listingPhone">رقم الهاتف أو واتساب</label>
-            <input id="listingPhone" type="tel" required placeholder="رقم التواصل"></div>
+          <h3>1 — تفاصيل الإعلان</h3>
+          <div class="field">
+            <label for="listingDetails">اكتب كل ما تريد عن العقار في مكان واحد</label>
+            <textarea id="listingDetails" rows="8" required minlength="5" placeholder="اكتب بطريقتك: عنوان الإعلان، المحافظة والمنطقة، نوع العقار، للبيع أو للإيجار، السعر، المساحة، المواصفات، ورقم التواصل إن رغبت..."></textarea>
+          </div>
+        </section>
+        <section class="guest-edit-group">
+          <h3>2 — إضافة صور وفيديو</h3>
           <div class="field media-upload-field">
-            <label for="listingDetails">اكتب تفاصيل إعلانك وأضف الصور والفيديو بمكان واحد</label>
-            <textarea id="listingDetails" rows="6" placeholder="اكتب كل ما تريد عن العقار بطريقتك: الموقع، السعر، المساحة، عدد الغرف، حالة العقار، طريقة التواصل أو أي معلومة أخرى..."></textarea>
-            <label for="listingFiles">＋ إضافة صور أو فيديو</label>
+            <label for="listingFiles">＋ اختر الصور أو الفيديو من جهازك</label>
             <input id="listingFiles" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple>
-            <small>أضف الصور والفيديو مع التفاصيل مباشرة — حتى 8 ملفات، 50 ميغابايت للملف.</small>
+            <small>يمكنك إضافة حتى 8 ملفات، وبحجم أقصى 50 ميغابايت للملف.</small>
           </div>
         </section>
         <button class="btn btn-primary" type="submit">نشر الإعلان للمراجعة</button>
