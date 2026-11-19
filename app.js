@@ -102,6 +102,61 @@
     let currentUser = null;
     let isAdmin = false;
 
+    // متابعة المنصة للزوار دون إنشاء حساب: معرّف عشوائي محفوظ على هذا المتصفح فقط.
+    const FOLLOW_TOKEN_KEY = "syriaRealEstatePlatformFollowTokenV1";
+    function getPlatformFollowToken() {
+      let token = localStorage.getItem(FOLLOW_TOKEN_KEY);
+      if (!token) {
+        token = crypto.randomUUID();
+        localStorage.setItem(FOLLOW_TOKEN_KEY, token);
+      }
+      return token;
+    }
+    async function refreshPlatformFollowers() {
+      const countEl = $("platformFollowerCount");
+      const button = $("platformFollowButton");
+      if (!countEl || !button) return;
+      const token = getPlatformFollowToken();
+      const { data: count, error } = await db.rpc("platform_follower_count");
+      if (error) {
+        countEl.textContent = "غير متاح حالياً";
+        console.warn("تعذر تحميل عدد متابعي المنصة:", error.message);
+        return;
+      }
+      countEl.textContent = Number(count || 0).toLocaleString("ar");
+      const followed = localStorage.getItem(FOLLOW_TOKEN_KEY + ":active") === "1";
+      button.textContent = followed ? "✓ تتابع المنصة" : "＋ متابعة المنصة";
+      button.setAttribute("aria-pressed", followed ? "true" : "false");
+      button.dataset.followToken = token;
+    }
+    $("platformFollowButton")?.addEventListener("click", async () => {
+      const button = $("platformFollowButton");
+      const message = $("platformFollowMessage");
+      if (!button || button.disabled) return;
+      const token = getPlatformFollowToken();
+      const wasFollowing = localStorage.getItem(FOLLOW_TOKEN_KEY + ":active") === "1";
+      button.disabled = true;
+      if (message) message.textContent = "جارٍ تحديث المتابعة...";
+      try {
+        const { data: count, error } = await db.rpc("platform_set_follow", {
+          p_follower_token: token,
+          p_following: !wasFollowing
+        });
+        if (error) throw error;
+        localStorage.setItem(FOLLOW_TOKEN_KEY + ":active", wasFollowing ? "0" : "1");
+        if ($("platformFollowerCount")) $("platformFollowerCount").textContent = Number(count || 0).toLocaleString("ar");
+        button.textContent = wasFollowing ? "＋ متابعة المنصة" : "✓ تتابع المنصة";
+        button.setAttribute("aria-pressed", wasFollowing ? "false" : "true");
+        if (message) message.textContent = wasFollowing ? "تم إلغاء متابعتك للمنصة." : "شكراً لمتابعتك سوريا عقارات!";
+      } catch (error) {
+        if (message) message.textContent = "تعذر تحديث المتابعة الآن. حاول مرة أخرى.";
+        console.error("Platform follow error:", error);
+      } finally {
+        button.disabled = false;
+      }
+    });
+    refreshPlatformFollowers().catch(error => console.error("Follower count:", error));
+
     const loginSection = $("login");
     if (loginSection) {
       loginSection.innerHTML = `
