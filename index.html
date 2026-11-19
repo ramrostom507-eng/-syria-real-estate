@@ -7,7 +7,10 @@
   <meta name="description" content="سوريا عقارات - منصتك الذكية للبيع والشراء والإيجار والاستثمار العقاري في سوريا.">
   <meta name="theme-color" content="#102b2a">
   <title>سوريا عقارات | المنصة العقارية الذكية</title>
-  <link rel="stylesheet" href="styles.css?v=20261119-socialfeed1">
+  <link rel="stylesheet" href="styles.css?v=20261119-3dlaunch1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css">
+  <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js" defer></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js"></script>
 </head>
 <body>
 
@@ -225,6 +228,20 @@
             <small>يمكنك إضافة حتى 8 ملفات، وبحجم أقصى 50 ميغابايت للملف.</small>
           </div>
         </section>
+        <section class="guest-edit-group property-3d-studio">
+          <h3>3 — استوديو الجولات ثلاثية الأبعاد (اختياري)</h3>
+          <div class="field">
+            <label for="listingPanoramaFile">🌐 صورة بانورامية 360°</label>
+            <input id="listingPanoramaFile" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+            <small>ارفع صورة 360° حقيقية ملتقطة بوضع التصوير البانورامي. الصورة العادية لا تتحول وحدها إلى جولة 360°.</small>
+          </div>
+          <div class="field">
+            <label for="listingModelFile">🏠 نموذج ثلاثي الأبعاد للعقار (GLB / GLTF)</label>
+            <input id="listingModelFile" type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json">
+            <small>يفضّل ملف GLB واحد، بحجم أقصى 50 ميغابايت حالياً. يمكن تجهيز النموذج بتطبيق مسح ثلاثي الأبعاد أو خدمة متخصصة.</small>
+          </div>
+          <small>المرفقات اختيارية، وتخضع لمراجعة الإدارة مع الإعلان قبل عرضها للزوار.</small>
+        </section>
         <button class="btn btn-primary" type="submit">نشر الإعلان للمراجعة</button>
         <p id="formMessage" class="form-message" aria-live="polite"></p>
         <small>إعلانك لا يظهر للعامة إلا بعد مراجعة الإدارة والموافقة عليه.</small>
@@ -253,6 +270,6 @@
     <p class="copyright">© <span id="currentYear"></span> سوريا عقارات. جميع الحقوق محفوظة.</p>
   </footer>
 
-  <script src="app.js?v=20261119-socialfeed1"></script>
+  <script src="app.js?v=20261119-3dlaunch1"></script>
 </body>
 </html>
