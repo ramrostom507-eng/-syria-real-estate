@@ -521,10 +521,22 @@
       panel.querySelectorAll("button[data-remove-media]").forEach(btn=>btn.addEventListener("click",async()=>{
         if(!window.confirm("حذف هذه الصورة أو الفيديو من المنشور؟"))return;
         btn.disabled=true;
-        const removed=await db.rpc("guest_remove_media",{p_listing_id:id,p_token:token,p_media_id:btn.dataset.removeMedia});
-        if(removed.error||!removed.data){btn.disabled=false;setMessage("guestEditMessage","تعذر حذف الوسائط: "+(removed.error?.message||"تعذر التحقق من الصلاحية"),true);return;}
-        btn.closest(".guest-media-edit-item")?.remove();
-        setMessage("guestEditMessage","تم حذف الوسائط من الإعلان. احفظ التعديلات لإرسال الإعلان للمراجعة.");
+        try {
+          const category=$("guestEditCategory").value.split("|");
+          const saved=await db.rpc("guest_update_listing",{p_listing_id:id,p_token:token,
+            p_title:$("guestEditTitle").value.trim(),p_description:$("guestEditDescription").value.trim(),
+            p_listing_type:category[0],p_property_type:category[1],
+            p_governorate:$("guestEditGovernorate").value,p_contact_phone:$("guestEditPhone").value.trim()});
+          if(saved.error||!saved.data)throw new Error(saved.error?.message||"تعذر تجهيز الإعلان للتعديل.");
+          const removed=await db.rpc("guest_remove_media",{p_listing_id:id,p_token:token,p_media_id:btn.dataset.removeMedia});
+          if(removed.error||!removed.data)throw new Error(removed.error?.message||"تعذر التحقق من صلاحية حذف الوسائط.");
+          btn.closest(".guest-media-edit-item")?.remove();
+          setMessage("guestEditMessage","تم حذف الصورة أو الفيديو من المنشور، وأُرسل الإعلان للمراجعة قبل ظهوره مجدداً.");
+          await loadListings();await renderMyGuestAds();
+        } catch(err) {
+          btn.disabled=false;
+          setMessage("guestEditMessage","تعذر حذف الوسائط: "+err.message,true);
+        }
       }));
       $("guestEditForm").addEventListener("submit",async ev=>{ev.preventDefault();const c=$("guestEditCategory").value.split("|"),b=ev.submitter,files=Array.from($("guestEditFiles").files||[]);if(b)b.disabled=true;
         try{
