@@ -756,7 +756,7 @@
        '<div class="field"><label>نوع الإعلان</label><select id="guestEditCategory" required>'+guestOptions(guestCategories,p.listing_type+"|"+p.property_type)+'</select></div></section>'+
        '<section class="guest-edit-group"><h4>3 — التواصل والصور</h4><div class="field"><label>رقم التواصل</label><input id="guestEditPhone" type="tel" value="'+escapeHTML(p.contact_phone||"")+'"></div>'+
        '<div class="field"><label>الصور والفيديو الحالية</label><div class="guest-media-edit-list" style="display:flex;gap:10px;flex-wrap:wrap">'+(mediaCards.join("")||'<small>لا توجد صور مرفقة حالياً.</small>')+'</div></div>'+
-       '<div class="field"><label>إضافة صور أو فيديو جديد</label><input id="guestEditFiles" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple><small>يمكن إضافة حتى 8 ملفات في كل مرة، 50 ميغابايت للملف.</small></div></section>'+
+       '<div class="field"><label>إضافة صور أو فيديو جديد</label><input id="guestEditFiles" type="file" accept="image/*,video/*,.jpg,.jpeg,.png,.webp,.gif,.mp4,.m4v,.webm,.mov,.3gp,.3gpp,.avi,.mkv,.mpg,.mpeg,.ogv,.ts" multiple><small>يمكن إضافة حتى 8 ملفات في كل مرة، 50 ميغابايت للملف.</small></div></section>'+
        '<div class="guest-edit-actions"><button class="btn btn-primary" type="submit">حفظ التعديلات</button><button class="btn btn-outline" id="guestDeleteButton" type="button">حذف الإعلان كاملاً</button></div><p id="guestEditMessage" aria-live="polite"></p></form></div>';
       panel.querySelectorAll("button[data-remove-media]").forEach(btn=>btn.addEventListener("click",async()=>{
         if(!window.confirm("حذف هذه الصورة أو الفيديو من المنشور؟"))return;
