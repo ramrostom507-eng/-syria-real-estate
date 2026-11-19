@@ -1067,3 +1067,28 @@ button, a {
 @media(max-width:1050px){.portal-layout{grid-template-columns:minmax(0,1fr) 205px}.portal-sidebar-right{display:none}.portal-sidebar-left{position:static}.portal-main-column>.community-section{padding:0}}
 @media(max-width:760px){.portal-layout{width:94%;display:flex;flex-direction:column;gap:14px;margin:16px auto 32px}.portal-main-column{width:100%;order:1}.portal-sidebar-left{width:100%;order:2;position:static;grid-template-columns:repeat(2,minmax(0,1fr))}.portal-side-card{padding:13px}.portal-side-card h3{font-size:14px}.portal-side-card p{font-size:11px}.portal-main-column .community-heading{text-align:center}.portal-main-column .community-heading h2,.portal-main-column .section-heading h2{font-size:21px}}
 @media(max-width:430px){.portal-sidebar-left{grid-template-columns:1fr}.portal-follower-number{display:flex;align-items:center;justify-content:center;gap:9px}.portal-follower-number span{font-size:22px}}
+
+
+/* إصلاح ظهور التصميم الثاني على الهاتف: أظهر لوحة المتابعة قبل المحتوى */
+@media(max-width:1050px){
+  .portal-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+  .portal-sidebar-right{display:none}
+  .portal-sidebar-left{display:grid;position:static;grid-template-columns:repeat(2,minmax(0,1fr));order:0}
+  .portal-main-column{order:1;min-width:0}
+}
+@media(max-width:760px){
+  #platformFollowBar{display:none!important}
+  .portal-layout{width:94%;display:flex;flex-direction:column;gap:14px;margin:14px auto 30px}
+  .portal-sidebar-left{display:grid;width:100%;order:0;grid-template-columns:repeat(2,minmax(0,1fr));position:static}
+  .portal-main-column{width:100%;order:1}
+  .portal-side-card{padding:12px;gap:7px}
+  .portal-side-card h3{font-size:14px}
+  .portal-side-card p{font-size:11px}
+  .portal-main-column .community-heading{text-align:center}
+}
+@media(max-width:430px){
+  .portal-sidebar-left{grid-template-columns:1fr}
+  .portal-sidebar-left .portal-side-card:not(.portal-follow-card){display:none}
+  .portal-follower-number{display:flex;align-items:center;justify-content:center;gap:9px}
+  .portal-follower-number span{font-size:22px}
+}
