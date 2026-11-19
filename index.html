@@ -26,6 +26,7 @@
       <a href="#properties">الإعلانات</a>
       <a href="#searchForm">بحث</a>
       <a href="#add-property">نشر إعلان</a>
+      <a href="#my-listings">إعلاناتي</a>
       <a href="#login">دخول الإدارة</a>
     </nav>
 
@@ -167,7 +168,7 @@
         <p>أضف عقارك مباشرة دون إنشاء حساب. ستراجع الإدارة الإعلان قبل نشره.</p>
       </div>
 
-      <div class="guest-manage-box"><h3>إدارة إعلانك بدون حساب</h3><p>أدخل رقم الإعلان ورمز الإدارة اللذين حصلت عليهما عند النشر لتعديله أو حذفه.</p><form id="guestLookupForm" class="guest-lookup-form"><input id="guestListingId" type="text" placeholder="رقم الإعلان" required><input id="guestListingToken" type="password" placeholder="رمز الإدارة الخاص" required autocomplete="off"><button class="btn btn-outline" type="submit">فتح إعلاني</button></form><p id="guestLookupMessage" aria-live="polite"></p><div id="guestManagePanel"></div></div><div id="guestCredentials" aria-live="polite"></div>      <form id="propertyForm" class="property-form">
+      <form id="propertyForm" class="property-form">
         <div class="form-grid">
           <div class="field">
             <label for="listingTitle">عنوان الإعلان</label>
@@ -212,10 +213,20 @@
           <label for="listingDetails">تفاصيل إضافية (اختياري)</label>
           <textarea id="listingDetails" rows="3" placeholder="اكتب السعر والمساحة وعدد الغرف والمنطقة وأي معلومات تهم المشتري..."></textarea>
         </div>
-        <button class="btn btn-primary" type="submit">إرسال الإعلان للمراجعة</button>
+        <div class="field media-upload-field">
+          <label for="listingFiles">صور وفيديو العقار</label>
+          <input id="listingFiles" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple>
+          <small>أرفق حتى 8 صور أو فيديوهات مباشرة مع الإعلان. الحد الأقصى 50 ميغابايت لكل ملف.</small>
+        </div>
+        <button class="btn btn-primary" type="submit">نشر الإعلان للمراجعة</button>
         <p id="formMessage" class="form-message" aria-live="polite"></p>
         <small>إعلانك لا يظهر للعامة إلا بعد مراجعة الإدارة والموافقة عليه.</small>
       </form>
+      <section class="my-listings-section" id="my-listings">
+        <div class="section-heading"><span class="eyebrow">إدارة إعلاناتك</span><h2>إعلاناتي</h2><p>تظهر هنا الإعلانات التي نشرتها من هذا الجهاز، ويمكنك تعديلها أو حذفها دون إنشاء حساب.</p></div>
+        <div id="myGuestAds"><p class="empty-state">جارٍ تحميل إعلاناتك...</p></div>
+        <div id="guestManagePanel"></div>
+      </section>
     </section>
 
   </main>
@@ -229,11 +240,12 @@
       <a href="#properties">الإعلانات</a>
       <a href="#searchForm">بحث</a>
       <a href="#add-property">نشر إعلان</a>
-      <a href="#login">حسابي</a>
+      <a href="#my-listings">إعلاناتي</a>
+      <a href="#login">دخول الإدارة</a>
     </div>
     <p class="copyright">© <span id="currentYear"></span> سوريا عقارات. جميع الحقوق محفوظة.</p>
   </footer>
 
-  <script src="app.js?v=20261119-guest2"></script>
+  <script src="app.js?v=20261119-media1"></script>
 </body>
 </html>

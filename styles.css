@@ -908,3 +908,19 @@ button, a {
 }
 
 .guest-manage-box{max-width:900px;margin:0 auto 18px;padding:18px;border:1px solid var(--border);border-radius:13px;background:#fbfaf6}.guest-manage-box h3,.guest-edit-card h3,.guest-credentials-card h3{color:var(--green);margin-bottom:6px}.guest-manage-box p,.guest-credentials-card p{font-size:13px;color:var(--muted);margin:5px 0 12px}.guest-lookup-form{display:grid;grid-template-columns:1fr 1.4fr auto;gap:9px}.guest-lookup-form input,.guest-edit-form input,.guest-edit-form select,.guest-edit-form textarea{width:100%;min-height:44px;padding:10px;border:1px solid var(--border);border-radius:8px;background:white}.guest-edit-card,.guest-credentials-card{margin-top:14px;padding:16px;border:1px solid var(--border);border-radius:12px;background:white}.guest-edit-form{display:grid;gap:12px}.guest-edit-actions{display:flex;gap:9px;flex-wrap:wrap}.guest-credentials-card{max-width:900px;margin:14px auto;padding:18px;border-color:var(--gold)}.guest-credentials-card label{display:block;font-weight:800;color:var(--green);margin-top:12px}.guest-credentials-card code{display:block;overflow-wrap:anywhere;direction:ltr;text-align:left;padding:10px;margin:5px 0;background:var(--cream);border-radius:7px;font-size:12px}.guest-credentials-card button{margin:4px 0}@media(max-width:760px){.guest-lookup-form{grid-template-columns:1fr}.guest-edit-actions .btn{flex:1}.guest-manage-box{padding:13px}}
+
+/* نشر وإدارة الإعلان والوسائط دون حساب */
+.media-upload-field{margin:12px 0 18px;padding:14px;border:1px dashed var(--gold);border-radius:10px;background:#fcfbf7}
+.media-upload-field input,.guest-edit-form input[type=file]{width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;background:white}
+.media-upload-field small,.guest-edit-form small{display:block;color:var(--muted);font-size:11px;margin-top:7px}
+.my-listings-section{max-width:960px;margin:26px auto 0;padding:22px;border:1px solid var(--border);border-radius:14px;background:#fbfaf6}
+.my-listings-section .section-heading{margin-bottom:16px}
+.my-listings-section .section-heading p{font-size:13px;color:var(--muted)}
+.my-guest-list{display:grid;gap:9px}
+.my-guest-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px;border:1px solid var(--border);border-radius:10px;background:white}
+.my-guest-row span{font-weight:700;color:var(--green)}
+.guest-edit-card{margin-top:16px;padding:16px;border:1px solid var(--border);border-radius:12px;background:white}
+.guest-edit-form{display:grid;gap:12px}
+.guest-edit-form input,.guest-edit-form select,.guest-edit-form textarea{width:100%;min-height:44px;padding:10px;border:1px solid var(--border);border-radius:8px;background:white}
+.guest-edit-actions{display:flex;gap:9px;flex-wrap:wrap}
+@media(max-width:760px){.my-listings-section{margin:18px 3%;padding:14px}.my-guest-row{align-items:stretch;flex-direction:column}.guest-edit-actions .btn{flex:1}}

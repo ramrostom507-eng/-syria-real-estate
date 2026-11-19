@@ -462,39 +462,89 @@
     }
 
 
+
+    const GUEST_ADS_KEY = "syriaRealEstateGuestAdsV1";
     function makeGuestToken(){return Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,"0")).join("");}
+    function getGuestAds(){try{const v=JSON.parse(localStorage.getItem(GUEST_ADS_KEY)||"[]");return Array.isArray(v)?v.filter(x=>x&&x.id&&x.token):[];}catch(_){return [];}}
+    function saveGuestAd(id,token){const ads=getGuestAds().filter(x=>x.id!==id);ads.unshift({id,token,savedAt:new Date().toISOString()});localStorage.setItem(GUEST_ADS_KEY,JSON.stringify(ads.slice(0,50)));}
+    function forgetGuestAd(id){localStorage.setItem(GUEST_ADS_KEY,JSON.stringify(getGuestAds().filter(x=>x.id!==id)));}
     const guestCategories=[["sale|apartment","شقة للبيع"],["rent|apartment","شقة للإيجار"],["sale|house","منزل أو فيلا للبيع"],["rent|house","منزل أو فيلا للإيجار"],["sale|land","أرض للبيع"],["investment|land","أرض للاستثمار"],["sale|commercial","محل تجاري للبيع"],["rent|commercial","محل تجاري للإيجار"],["sale|office","مكتب للبيع"],["rent|office","مكتب للإيجار"],["sale|warehouse","مستودع للبيع"],["rent|warehouse","مستودع للإيجار"],["investment|other","فرصة استثمارية أخرى"]];
     const guestGovernorates=["دمشق","ريف دمشق","حلب","حمص","حماة","اللاذقية","طرطوس","إدلب","درعا","السويداء","القنيطرة","دير الزور","الرقة","الحسكة"];
     function guestOptions(items,selected){return items.map(x=>'<option value="'+escapeHTML(x[0])+'" '+(selected===x[0]?'selected':'')+'>'+escapeHTML(x[1])+'</option>').join("");}
+    async function uploadGuestFiles(id,token,files){
+      if(files.length>8)throw new Error("يمكن إرفاق 8 ملفات كحد أقصى.");
+      for(let i=0;i<files.length;i++){
+        const file=files[i],isImage=file.type.startsWith("image/"),isVideo=file.type.startsWith("video/");
+        if(!isImage&&!isVideo)throw new Error("يمكن رفع الصور والفيديو فقط.");
+        if(file.size>MAX_FILE_SIZE)throw new Error("حجم الملف "+file.name+" يتجاوز 50 ميغابايت.");
+        const allowed=["image/jpeg","image/png","image/webp","image/gif","video/mp4","video/webm","video/quicktime"];
+        if(!allowed.includes(file.type))throw new Error("صيغة الملف "+file.name+" غير مدعومة. استخدم JPG أو PNG أو WEBP أو MP4 أو MOV.");
+        const ext=(file.name.split(".").pop()||"file").toLowerCase().replace(/[^a-z0-9]/g,"")||"file";
+        const safeName=(file.name.replace(/[^a-zA-Z0-9._-]/g,"-").slice(-70)||("media."+ext));
+        const path="guest/"+id+"/"+crypto.randomUUID()+"-"+safeName;
+        const up=await db.storage.from(STORAGE_BUCKET).upload(path,file,{cacheControl:"3600",upsert:false,contentType:file.type});
+        if(up.error)throw new Error("تعذر رفع "+file.name+": "+up.error.message);
+        const linked=await db.rpc("guest_add_media",{p_listing_id:id,p_token:token,p_storage_path:path,p_media_type:isImage?"image":"video",p_alt_text:file.name,p_sort_order:i});
+        if(linked.error)throw new Error("تم رفع الملف لكن تعذر ربطه بالإعلان: "+linked.error.message);
+      }
+    }
+    async function renderMyGuestAds(){
+      const box=$("myGuestAds");if(!box)return;
+      const ads=getGuestAds();
+      if(!ads.length){box.innerHTML='<p class="empty-state">لا توجد إعلانات محفوظة على هذا الجهاز بعد. عند نشر إعلانك سيظهر هنا تلقائياً.</p>';return;}
+      box.innerHTML='<p>إعلاناتك المحفوظة على هذا الجهاز:</p><div class="my-guest-list">'+ads.map((x,i)=>'<div class="my-guest-row"><span>إعلان '+(i+1)+'</span><button class="btn btn-outline" type="button" data-guest-open="'+escapeHTML(x.id)+'">فتح الإعلان وإدارته</button></div>').join("")+'</div>';
+    }
     async function openGuestListing(id,token){
-      const panel=$("guestManagePanel");if(!panel)return;panel.textContent="جارٍ التحقق من رمز الإعلان...";
+      const panel=$("guestManagePanel");if(!panel)return;panel.textContent="جارٍ تحميل إعلانك...";
       const r=await db.rpc("guest_get_listing",{p_listing_id:id,p_token:token});
-      if(r.error){panel.textContent="تعذر تحميل الإعلان: "+r.error.message;return;}
-      const p=r.data;if(!p){panel.textContent="رقم الإعلان أو رمز الإدارة غير صحيح.";return;}
-      panel.innerHTML='<div class="guest-edit-card"><h3>إدارة إعلانك</h3><p>الحالة: <strong>'+(p.status==="approved"?"منشور":p.status==="pending"?"قيد المراجعة":"غير منشور")+'</strong></p>'+
-       '<form id="guestEditForm" class="guest-edit-form"><div class="field"><label>عنوان الإعلان</label><input id="guestEditTitle" required maxlength="120" value="'+escapeHTML(p.title)+'"></div>'+
+      if(r.error||!r.data){panel.textContent="تعذر العثور على الإعلان المحفوظ على هذا الجهاز.";return;}
+      const p=r.data;
+      panel.innerHTML='<div class="guest-edit-card"><h3>إدارة إعلانك</h3><p>حالة الإعلان: <strong>'+(p.status==="approved"?"منشور":p.status==="pending"?"قيد المراجعة":"غير منشور")+'</strong></p>'+
+       '<form id="guestEditForm" class="guest-edit-form"><div class="field"><label>عنوان الإعلان</label><input id="guestEditTitle" required maxlength="180" value="'+escapeHTML(p.title)+'"></div>'+
        '<div class="field"><label>المحافظة</label><select id="guestEditGovernorate" required>'+guestOptions(guestGovernorates.map(v=>[v,v]),p.governorate)+'</select></div>'+
        '<div class="field"><label>نوع الإعلان</label><select id="guestEditCategory" required>'+guestOptions(guestCategories,p.listing_type+"|"+p.property_type)+'</select></div>'+
        '<div class="field"><label>رقم التواصل</label><input id="guestEditPhone" type="tel" required value="'+escapeHTML(p.contact_phone||"")+'"></div>'+
        '<div class="field"><label>التفاصيل</label><textarea id="guestEditDescription" rows="4">'+escapeHTML(p.description||"")+'</textarea></div>'+
-       '<div class="guest-edit-actions"><button class="btn btn-primary" type="submit">حفظ التعديلات</button><button class="btn btn-outline" id="guestDeleteButton" type="button">حذف الإعلان</button></div><p id="guestEditMessage"></p></form></div>';
-      $("guestEditForm").addEventListener("submit",async ev=>{ev.preventDefault();const c=$("guestEditCategory").value.split("|"),b=ev.submitter;if(b)b.disabled=true;
-        const u=await db.rpc("guest_update_listing",{p_listing_id:id,p_token:token,p_title:$("guestEditTitle").value.trim(),p_description:$("guestEditDescription").value.trim(),p_listing_type:c[0],p_property_type:c[1],p_governorate:$("guestEditGovernorate").value,p_contact_phone:$("guestEditPhone").value.trim()});
-        if(u.error||!u.data){setMessage("guestEditMessage","تعذر الحفظ: "+(u.error?.message||"رمز غير صحيح"),true);if(b)b.disabled=false;return;}
-        setMessage("guestEditMessage","تم حفظ التعديلات. سيعود الإعلان للمراجعة قبل ظهوره مجدداً.");await loadListings();if(b)b.disabled=false;});
-      $("guestDeleteButton").addEventListener("click",async()=>{if(!window.confirm("هل تريد حذف الإعلان نهائياً؟"))return;const b=$("guestDeleteButton");b.disabled=true;
-        const d=await db.rpc("guest_delete_listing",{p_listing_id:id,p_token:token});if(d.error||!d.data){setMessage("guestEditMessage","تعذر الحذف: "+(d.error?.message||"رمز غير صحيح"),true);b.disabled=false;return;}
-        panel.innerHTML="<p>تم حذف إعلانك بنجاح.</p>";$("guestLookupForm").reset();await loadListings();});
+       '<div class="field"><label>إضافة صور أو فيديو</label><input id="guestEditFiles" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple><small>حتى 8 ملفات، 50 ميغابايت للملف.</small></div>'+
+       '<div class="guest-edit-actions"><button class="btn btn-primary" type="submit">حفظ التعديلات</button><button class="btn btn-outline" id="guestDeleteButton" type="button">حذف الإعلان</button></div><p id="guestEditMessage" aria-live="polite"></p></form></div>';
+      $("guestEditForm").addEventListener("submit",async ev=>{ev.preventDefault();const c=$("guestEditCategory").value.split("|"),b=ev.submitter,files=Array.from($("guestEditFiles").files||[]);if(b)b.disabled=true;
+        try{
+          const u=await db.rpc("guest_update_listing",{p_listing_id:id,p_token:token,p_title:$("guestEditTitle").value.trim(),p_description:$("guestEditDescription").value.trim(),p_listing_type:c[0],p_property_type:c[1],p_governorate:$("guestEditGovernorate").value,p_contact_phone:$("guestEditPhone").value.trim()});
+          if(u.error||!u.data)throw new Error(u.error?.message||"تعذر حفظ التعديلات.");
+          if(files.length)await uploadGuestFiles(id,token,files);
+          setMessage("guestEditMessage","تم حفظ التعديلات وإرسالها للمراجعة. ستظهر بعد موافقة الإدارة.");
+          await loadListings();await renderMyGuestAds();
+        }catch(err){setMessage("guestEditMessage","تعذر إكمال العملية: "+err.message,true);}finally{if(b)b.disabled=false;}
+      });
+      $("guestDeleteButton").addEventListener("click",async()=>{if(!window.confirm("هل تريد حذف هذا الإعلان نهائياً؟"))return;const b=$("guestDeleteButton");b.disabled=true;
+        const d=await db.rpc("guest_delete_listing",{p_listing_id:id,p_token:token});
+        if(d.error||!d.data){setMessage("guestEditMessage","تعذر الحذف: "+(d.error?.message||"تعذر التحقق من الإعلان"),true);b.disabled=false;return;}
+        forgetGuestAd(id);panel.innerHTML="<p>تم حذف الإعلان.</p>";await renderMyGuestAds();await loadListings();
+      });
+      panel.scrollIntoView({behavior:"smooth",block:"center"});
     }
-    $("guestLookupForm")?.addEventListener("submit",async ev=>{ev.preventDefault();const id=$("guestListingId").value.trim(),token=$("guestListingToken").value.trim().toLowerCase();if(!/^[a-f0-9]{64}$/.test(token)){setMessage("guestLookupMessage","رمز الإدارة غير مكتمل.",true);return;}setMessage("guestLookupMessage","جارٍ فتح إعلانك...");await openGuestListing(id,token);setMessage("guestLookupMessage","");});
-    $("propertyForm")?.addEventListener("submit",async ev=>{ev.preventDefault();const title=$("listingTitle").value.trim(),governorate=$("listingCity").value,c=$("listingCategory").value.split("|"),phone=$("listingPhone").value.trim(),description=$("listingDetails").value.trim();
+    $("myGuestAds")?.addEventListener("click",async ev=>{
+      const b=ev.target.closest("button[data-guest-open]");if(!b)return;
+      const ad=getGuestAds().find(x=>x.id===b.dataset.guestOpen);if(ad)await openGuestListing(ad.id,ad.token);
+    });
+    $("propertyForm")?.addEventListener("submit",async ev=>{
+      ev.preventDefault();
+      const title=$("listingTitle").value.trim(),governorate=$("listingCity").value,c=$("listingCategory").value.split("|"),phone=$("listingPhone").value.trim(),description=$("listingDetails").value.trim(),files=Array.from($("listingFiles")?.files||[]);
       if(!title||title.length<5||!governorate||!c[0]||!c[1]||!phone){setMessage("formMessage","أدخل العنوان والمحافظة ونوع الإعلان ورقم التواصل بشكل صحيح.",true);return;}
-      const b=ev.submitter||$("propertyForm").querySelector('button[type="submit"]');if(b)b.disabled=true;setMessage("formMessage","جارٍ إرسال الإعلان للمراجعة...");const token=makeGuestToken();
-      try{const r=await db.rpc("guest_create_listing",{p_token:token,p_title:title,p_description:description,p_listing_type:c[0],p_property_type:c[1],p_governorate:governorate,p_contact_phone:phone});if(r.error)throw r.error;
-        $("propertyForm").reset();const box=$("guestCredentials");if(box)box.innerHTML='<div class="guest-credentials-card"><h3>تم استلام إعلانك بنجاح ✓</h3><p>إعلانك قيد مراجعة الإدارة. احتفظ برقم الإعلان ورمز الإدارة لتعديله أو حذفه لاحقاً.</p><label>رقم الإعلان</label><code>'+escapeHTML(r.data)+'</code><button type="button" class="btn btn-outline" data-copy-value="'+escapeHTML(r.data)+'">نسخ رقم الإعلان</button><label>رمز الإدارة الخاص — لا تشاركه مع أحد</label><code>'+escapeHTML(token)+'</code><button type="button" class="btn btn-primary" data-copy-value="'+escapeHTML(token)+'">نسخ رمز الإدارة</button><p>إذا فقدت الرمز فلن نستطيع إثبات ملكيتك للإعلان. احتفظ به في مكان آمن.</p></div>';
-        setMessage("formMessage","تم استلام إعلانك. سيظهر بعد موافقة الإدارة.");box?.scrollIntoView({behavior:"smooth",block:"center"});
-      }catch(err){console.error(err);setMessage("formMessage","تعذر إرسال الإعلان: "+(err.message||"خطأ غير معروف"),true);}finally{if(b)b.disabled=false;}});
-    $("guestCredentials")?.addEventListener("click",async ev=>{const b=ev.target.closest("button[data-copy-value]");if(!b)return;try{await navigator.clipboard.writeText(b.dataset.copyValue);b.textContent="تم النسخ ✓";}catch(_){window.prompt("انسخ النص التالي:",b.dataset.copyValue);}});
+      if(files.length>8){setMessage("formMessage","يمكن إرفاق 8 ملفات كحد أقصى.",true);return;}
+      const b=ev.submitter||$("propertyForm").querySelector('button[type="submit"]');if(b)b.disabled=true;setMessage("formMessage","جارٍ إرسال الإعلان...");
+      const token=makeGuestToken();
+      try{
+        const r=await db.rpc("guest_create_listing",{p_token:token,p_title:title,p_description:description,p_listing_type:c[0],p_property_type:c[1],p_governorate:governorate,p_contact_phone:phone});
+        if(r.error)throw r.error;
+        const id=r.data;saveGuestAd(id,token);
+        if(files.length){setMessage("formMessage","تم إرسال بيانات الإعلان. جارٍ رفع الصور والفيديو...");await uploadGuestFiles(id,token,files);}
+        $("propertyForm").reset();setMessage("formMessage","تم استلام إعلانك بنجاح. سيظهر بعد موافقة الإدارة، وستجده في قسم «إعلاناتي» على هذا الجهاز.");
+        await renderMyGuestAds();await loadListings();
+        $("my-listings")?.scrollIntoView({behavior:"smooth",block:"center"});
+      }catch(err){console.error(err);setMessage("formMessage","تعذر إكمال النشر: "+(err.message||"خطأ غير معروف")+". إعلانك قد يكون محفوظاً؛ افتح قسم إعلاناتي لإكماله.",true);await renderMyGuestAds();}
+      finally{if(b)b.disabled=false;}
+    });
     let generatedPropertyAd = "";
     $("aiPrepareButton")?.addEventListener("click", () => {
       const raw = $("aiDescription")?.value.trim() || "";
@@ -539,6 +589,7 @@
 
     await refreshUser();
     await loadListings();
+    await renderMyGuestAds();
     db.auth.onAuthStateChange((_event, session) => {
       currentUser = session?.user || null;
       refreshAdminState().catch(error => console.error("admin refresh:", error));
