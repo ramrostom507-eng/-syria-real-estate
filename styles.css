@@ -924,3 +924,63 @@ button, a {
 .guest-edit-form input,.guest-edit-form select,.guest-edit-form textarea{width:100%;min-height:44px;padding:10px;border:1px solid var(--border);border-radius:8px;background:white}
 .guest-edit-actions{display:flex;gap:9px;flex-wrap:wrap}
 @media(max-width:760px){.my-listings-section{margin:18px 3%;padding:14px}.my-guest-row{align-items:stretch;flex-direction:column}.guest-edit-actions .btn{flex:1}}
+
+
+/* التبسيط النهائي: موجز منشورات شبيه بمجموعات فيسبوك */
+.site-header { min-height:64px; padding:8px clamp(12px,4vw,42px); }
+.main-nav a { font-size:13px; }
+.section#properties { padding-top:18px; }
+.section#properties .section-heading h2 { font-size:24px; }
+.property-grid { max-width:760px; gap:18px; }
+.property-post {
+  border:1px solid #e5e8e3;
+  border-radius:14px;
+  box-shadow:0 2px 12px rgba(16,43,42,.07);
+  overflow:hidden;
+}
+.property-post-head { padding:14px 16px; }
+.property-post-mark { background:#edf2ed; color:var(--green); }
+.property-post-head strong { font-size:14px; }
+.property-post-head small { font-size:11px; }
+.property-media-gallery {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:4px;
+  padding:0;
+  overflow:hidden;
+}
+.property-media-item {
+  width:100%;
+  min-width:0;
+  height:230px;
+  flex:auto;
+  border-radius:0;
+  background:#eef0eb;
+}
+.property-media-item:first-child { grid-column:1 / -1; height:360px; }
+.property-media-item img,.property-media-item video {
+  width:100%; height:100%; object-fit:cover;
+}
+.property-placeholder { min-height:220px; }
+.property-post .property-info { padding:14px 16px 16px; }
+.property-description { font-size:14px; line-height:1.85; }
+.property-post-actions { border-top:1px solid var(--border); padding-top:12px; margin-top:12px; }
+.property-post-actions .btn { min-height:42px; }
+.search-section { padding:12px 15px; }
+.search-section .section-heading h2 { font-size:18px; }
+.property-form { max-width:760px; box-shadow:none; }
+.guest-edit-group { margin-bottom:16px; }
+.guest-edit-group h3 { font-size:15px; color:var(--green); margin-bottom:9px; }
+.media-upload-field { margin-top:8px; }
+@media(max-width:760px) {
+  .property-grid { gap:13px; }
+  .property-media-gallery { grid-template-columns:1fr 1fr; }
+  .property-media-item { height:145px; }
+  .property-media-item:first-child { height:245px; }
+  .property-post-head { min-height:66px; }
+  .property-post-head > div { padding-left:65px; }
+  .property-post .property-info { padding:12px; }
+  .property-description { font-size:13px; }
+  .property-post-actions .btn { min-width:120px; font-size:11px; }
+  .section#properties .section-heading h2 { font-size:21px; }
+}
