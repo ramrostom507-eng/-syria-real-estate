@@ -18,9 +18,9 @@
       ogv:"video/ogg", ts:"video/mp2t"
     };
     const reported = (original.type || "").toLowerCase();
-    const mime = (!reported || reported === "application/octet-stream" || reported === "binary/octet-stream")
-      ? (byExtension[ext] || reported)
-      : reported;
+    const mime = (reported.startsWith("image/") || reported.startsWith("video/"))
+      ? reported
+      : (byExtension[ext] || reported);
     const isImage = mime.startsWith("image/") || ["jpg","jpeg","png","webp","gif"].includes(ext);
     const isVideo = mime.startsWith("video/") || ["mp4","m4v","webm","mov","3gp","3gpp","avi","mkv","mpg","mpeg","ogv","ts"].includes(ext);
     if (!isImage && !isVideo) throw new Error("صيغة الملف غير مدعومة: " + original.name);
