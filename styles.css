@@ -1092,3 +1092,29 @@ button, a {
   .portal-follower-number{display:flex;align-items:center;justify-content:center;gap:9px}
   .portal-follower-number span{font-size:22px}
 }
+
+
+/* الصفحة الرئيسية: موجز العقارات أولاً مثل المجموعة المرجعية */
+#platformFollowBar{display:none!important}
+.portal-layout{display:block!important;width:min(980px,96%)!important;margin:10px auto 34px!important}
+.portal-sidebar{display:none!important}
+.portal-main-column{display:flex!important;flex-direction:column!important;min-width:0}
+.portal-main-column>.section#properties{order:0!important;width:100%;margin:0 0 18px!important;padding:8px 0 24px!important}
+.portal-main-column>.search-section{order:1!important;width:100%;margin:0 0 20px!important}
+.portal-main-column>.community-section{order:2!important;width:100%;margin:0 0 24px!important;padding:18px 0!important}
+.portal-main-column>.section#properties .section-heading{margin:0 0 12px;padding:0 4px}
+.portal-main-column>.section#properties .section-heading h2{font-size:21px}
+.portal-main-column>.section#properties .property-grid{max-width:100%;width:100%;gap:14px}
+.portal-main-column>.section#properties .property-post{width:100%;background:#fff}
+.portal-main-column>.search-section{padding:12px 14px;border-radius:12px}
+.portal-main-column>.community-section .community-heading{margin-bottom:14px}
+@media(max-width:760px){
+  .portal-layout{width:100%!important;margin:6px auto 24px!important;padding:0 10px}
+  .portal-main-column>.section#properties{padding:4px 0 18px!important}
+  .portal-main-column>.section#properties .section-heading h2{font-size:19px}
+  .portal-main-column>.section#properties .property-grid{gap:11px}
+  .portal-main-column>.section#properties .property-media-item:first-child{height:245px}
+  .portal-main-column>.section#properties .property-post-head{padding:11px 12px}
+  .portal-main-column>.search-section{padding:10px;margin-bottom:14px}
+  .portal-main-column>.community-section{padding:14px 0!important}
+}
