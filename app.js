@@ -473,11 +473,25 @@
       const { data: allListings, error: allError } = await db.from("listings")
         .select(listingSelect).in("status", ["approved","pending"])
         .order("created_at", { ascending: false });
+      const { data: statsRows, error: statsError } = await db.from("listing_view_totals")
+        .select("views,image_views,video_views");
+      const platformStats = (statsRows || []).reduce((sum, x) => ({
+        views: sum.views + Number(x.views || 0),
+        imageViews: sum.imageViews + Number(x.image_views || 0),
+        videoViews: sum.videoViews + Number(x.video_views || 0)
+      }), { views: 0, imageViews: 0, videoViews: 0 });
+      if (statsError) console.warn("تعذر تحميل إحصائيات المنصة:", statsError.message);
       const uploadOptions = !allError && allListings?.length
         ? allListings.map(x => `<option value="${escapeHTML(x.id)}">${escapeHTML(x.title)} — ${x.status === "approved" ? "منشور" : "قيد المراجعة"}</option>`).join("")
         : "";
       panel.innerHTML = `
         <div style="display:grid;gap:14px">
+          <section class="property-card property-view-stats" style="padding:16px;display:flex;gap:18px;flex-wrap:wrap">
+            <strong>إحصائيات المنصة:</strong>
+            <span>👁 ${platformStats.views.toLocaleString("en-US")} مشاهدة إعلانات</span>
+            <span>📷 ${platformStats.imageViews.toLocaleString("en-US")} مشاهدة صور</span>
+            <span>🎬 ${platformStats.videoViews.toLocaleString("en-US")} تشغيل فيديو</span>
+          </section>
           <section class="property-card" style="padding:16px">
             <h3>إضافة صور إلى إعلان موجود</h3>
             <p>اختر الإعلان ثم ارفع الصور الأصلية من جهازك. ستظهر الصور على الإعلان بعد اكتمال الرفع.</p>
