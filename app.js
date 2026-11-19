@@ -282,10 +282,10 @@
           ? `<a class="btn btn-outline property-contact" href="tel:${escapeHTML(p.contact_phone)}">اتصل بالمعلن</a>`
           : "";
         const shareText = [p.title, p.governorate, p.city, price].filter(Boolean).join(" — ");
-        const shareUrl = window.location.origin + window.location.pathname + "#properties";
+        const shareUrl = window.location.origin + window.location.pathname + "?listing=" + encodeURIComponent(p.id) + "#property-" + encodeURIComponent(p.id);
         const whatsapp = `https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`;
         return `
-          <article class="property-card property-post">
+          <article id="property-${escapeHTML(p.id)}" class="property-card property-post">
             <div class="property-post-head">
               <span class="property-post-mark">⌂</span>
               <div><strong>${escapeHTML(p.title)}</strong>
@@ -303,13 +303,32 @@
               <p class="property-price">${price}</p>
               <div class="property-post-actions">
                 ${phone}
-                <a class="btn btn-light property-share" href="${whatsapp}" target="_blank" rel="noopener">مشاركة عبر واتساب</a>
+                <a class="btn btn-light property-share" href="${whatsapp}" target="_blank" rel="noopener">واتساب</a>
+                <button class="btn btn-outline property-share" type="button" data-share-url="${escapeHTML(shareUrl)}" data-share-text="${escapeHTML(shareText)}">↗ مشاركة</button>
               </div>
               ${media.length ? `<small class="media-count">📷 ${media.filter(x => x.media_type === "image").length} صور · 🎥 ${media.filter(x => x.media_type === "video").length} فيديو</small>` : ""}
             </div>
           </article>`;
       });
       grid.innerHTML = cards.join("");
+      grid.querySelectorAll("[data-share-url]").forEach(button => {
+        button.addEventListener("click", async () => {
+          const url = button.dataset.shareUrl;
+          const title = button.dataset.shareText || "إعلان عقاري من سوريا عقارات";
+          try {
+            if (navigator.share) {
+              await navigator.share({ title: "سوريا عقارات", text: title, url });
+            } else if (navigator.clipboard?.writeText) {
+              await navigator.clipboard.writeText(title + " — " + url);
+              button.textContent = "✓ تم نسخ الرابط";
+            } else {
+              window.prompt("انسخ رابط الإعلان:", url);
+            }
+          } catch (error) {
+            if (error?.name !== "AbortError") window.prompt("انسخ رابط الإعلان:", url);
+          }
+        });
+      });
     }
 
     const listingSelect = "*, listing_media(id, media_type, storage_path, sort_order)";
