@@ -221,6 +221,27 @@
       return data?.signedUrl || "";
     }
 
+    async function prepareImageForUpload(file) {
+      if (!file?.type?.startsWith("image/") || file.type === "image/gif") return file;
+      let bitmap;
+      try {
+        bitmap = await createImageBitmap(file);
+        const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+        const ctx = canvas.getContext("2d", { alpha: false });
+        if (!ctx) return file;
+        ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/webp", 0.76));
+        if (!blob || blob.size >= file.size * 0.92) return file;
+        return new File([blob], file.name.replace(/\\.[^.]+$/, "") + ".webp", { type: "image/webp", lastModified: Date.now() });
+      } catch (error) {
+        console.warn("تعذر ضغط الصورة:", file.name, error);
+        return file;
+      } finally { bitmap?.close?.(); }
+    }
+
     const SOCIAL_GUEST_KEY = "syriaRealEstateSocialGuestV1";
     function socialGuestId() {
       let id = localStorage.getItem(SOCIAL_GUEST_KEY);
@@ -239,40 +260,16 @@
         return;
       }
 
-      // جهّز روابط الصور المصغّرة والفيديو بالتوازي مع بيانات التفاعل.
-      // الصور تُرسل من Supabase بحجم مناسب للبطاقات وجودة أخف، مع رجوع تلقائي للأصل إذا لم تتوفر التحويلات.
-      const imagePaths = [...new Set(listings.flatMap(p =>
-        (p.listing_media || []).filter(m => m.media_type === "image").map(m => m.storage_path).filter(Boolean)
-      ))];
-      const videoPaths = [...new Set(listings.flatMap(p =>
-        (p.listing_media || []).filter(m => m.media_type === "video").map(m => m.storage_path).filter(Boolean)
-      ))];
+      // الصور المضغوطة تُقدّم مباشرة من التخزين؛ نتجنب طلب تحويلات الخطة المدفوعة.
+      const mediaPaths = [...new Set(listings.flatMap(p => (p.listing_media || []).map(item => item.storage_path).filter(Boolean)))];
       const signedMap = new Map();
       const listingIds = listings.map(p => p.id);
       const mediaPromise = (async () => {
-        const [imageResult, videoResult] = await Promise.all([
-          imagePaths.length
-            ? db.storage.from(STORAGE_BUCKET).createSignedUrls(imagePaths, 604800, {
-                transform: { width: 960, quality: 68, resize: "contain" }
-              })
-            : Promise.resolve({ data: [], error: null }),
-          videoPaths.length
-            ? db.storage.from(STORAGE_BUCKET).createSignedUrls(videoPaths, 604800)
-            : Promise.resolve({ data: [], error: null })
-        ]);
-        let images = imageResult;
-        if (imageResult.error || (imagePaths.length && (imageResult.data || []).filter(x => x?.signedUrl).length !== imagePaths.length)) {
-          console.warn("تحويل الصور غير متاح؛ سيتم استخدام النسخ الأصلية:", imageResult.error?.message || "بعض الصور لم تُحوّل");
-          images = imagePaths.length
-            ? await db.storage.from(STORAGE_BUCKET).createSignedUrls(imagePaths, 604800)
-            : { data: [], error: null };
+        for (let i = 0; i < mediaPaths.length; i += 100) {
+          const { data, error } = await db.storage.from(STORAGE_BUCKET).createSignedUrls(mediaPaths.slice(i, i + 100), 604800);
+          if (error) console.warn("تعذر إنشاء بعض روابط الوسائط:", error.message);
+          (data || []).forEach(item => { if (item?.path && item?.signedUrl) signedMap.set(item.path, item.signedUrl); });
         }
-        [images, videoResult].forEach(result => {
-          if (result.error) console.warn("تعذر إنشاء بعض روابط الوسائط:", result.error.message);
-          (result.data || []).forEach(item => {
-            if (item?.path && item?.signedUrl) signedMap.set(item.path, item.signedUrl);
-          });
-        });
       })();
       const socialPromise = listingIds.length ? Promise.all([
         db.from("listing_likes").select("listing_id").in("listing_id", listingIds),
@@ -525,6 +522,10 @@
               <button class="btn btn-primary" type="submit" ${uploadOptions ? "" : "disabled"}>رفع وربط الصور بالإعلان</button>
               <p id="adminMediaMessage" aria-live="polite"></p>
             </form>
+            <hr><h3>تسريع الصور القديمة</h3>
+            <p>يضغط الصور الموجودة إلى WebP ويحافظ على الملفات الأصلية كنسخة احتياطية.</p>
+            <button class="btn btn-outline" id="optimizeOldImagesButton" type="button">تحسين الصور القديمة الآن</button>
+            <p id="optimizeOldImagesMessage" aria-live="polite"></p>
           </section>
           <h3>طلبات النشر المعلقة (${data?.length || 0})</h3>
           ${data?.length ? data.map(p => `
@@ -552,6 +553,33 @@
               </div>
             </article>`).join("") : "<p>لا توجد إعلانات حالياً.</p>"}
         </div>`;
+      $("optimizeOldImagesButton")?.addEventListener("click", async (event) => {
+        if (!isAdmin) return;
+        const button=event.currentTarget, message=$("optimizeOldImagesMessage");
+        button.disabled=true;
+        try {
+          const {data:rows,error}=await db.from("listing_media").select("id,listing_id,storage_path,media_type,alt_text").eq("media_type","image");
+          if(error) throw error;
+          let done=0,skipped=0;
+          for(let i=0;i<(rows||[]).length;i++){
+            const row=rows[i]; if(message) message.textContent="جارٍ تحسين الصورة "+(i+1)+" من "+rows.length+"...";
+            const downloaded=await db.storage.from(STORAGE_BUCKET).download(row.storage_path);
+            if(downloaded.error) throw downloaded.error;
+            const source=new File([downloaded.data],row.alt_text||"photo.jpg",{type:downloaded.data.type||"image/jpeg"});
+            const optimized=await prepareImageForUpload(source);
+            if(optimized===source||optimized.size>=downloaded.data.size*.95){skipped++;continue;}
+            const newPath="admin/"+row.listing_id+"/optimized-"+row.id+".webp";
+            const uploaded=await db.storage.from(STORAGE_BUCKET).upload(newPath,optimized,{cacheControl:"31536000",upsert:true,contentType:optimized.type});
+            if(uploaded.error) throw uploaded.error;
+            const updated=await db.from("listing_media").update({storage_path:newPath}).eq("id",row.id);
+            if(updated.error) throw updated.error;
+            done++;
+          }
+          if(message) message.textContent="اكتمل: تم ضغط "+done+" صورة، و"+skipped+" لم تحتج ضغطاً. النسخ الأصلية محفوظة.";
+          await loadListings();
+        } catch(error){if(message) message.textContent="توقف التحسين: "+(error.message||"خطأ غير معروف");}
+        finally{button.disabled=false;}
+      });
       $("adminMediaForm")?.addEventListener("submit", async (event) => {
         event.preventDefault();
         if (!isAdmin) return;
@@ -666,7 +694,8 @@
     async function uploadGuestFiles(id,token,files){
       if(files.length>8)throw new Error("يمكن إرفاق 8 ملفات كحد أقصى.");
       for(let i=0;i<files.length;i++){
-        const file=files[i],isImage=file.type.startsWith("image/"),isVideo=file.type.startsWith("video/");
+        const original=files[i],isImage=original.type.startsWith("image/"),isVideo=original.type.startsWith("video/");
+        const file=isImage?await prepareImageForUpload(original):original;
         if(!isImage&&!isVideo)throw new Error("يمكن رفع الصور والفيديو فقط.");
         if(file.size>MAX_FILE_SIZE)throw new Error("حجم الملف "+file.name+" يتجاوز 50 ميغابايت.");
         const allowed=["image/jpeg","image/png","image/webp","image/gif","video/mp4","video/webm","video/quicktime"];
