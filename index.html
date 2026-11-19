@@ -48,6 +48,18 @@
   </section>
 
   <main>
+
+<section class="community-section" id="community">
+  <div class="community-heading"><span class="eyebrow">مجتمع سوريا عقارات</span><h2>مجتمعنا العقاري</h2><p>انشر سؤالك أو فرصتك أو تجربتك باسمك المستعار، وشارك الآخرين دون إنشاء حساب.</p></div>
+  <form id="communityPostForm" class="community-composer">
+    <input id="communityDisplayName" type="text" maxlength="60" minlength="2" placeholder="اكتب الاسم الذي سيظهر للناس" required>
+    <textarea id="communityPostBody" rows="4" maxlength="10000" minlength="2" placeholder="بماذا تفكر؟ اكتب منشورك هنا..." required></textarea>
+    <div class="community-composer-actions"><select id="communityPostType" aria-label="نوع المنشور"><option value="general">منشور عام</option><option value="property">عرض عقاري</option><option value="question">سؤال واستفسار</option><option value="offer">فرصة أو طلب</option></select><button class="btn btn-primary" type="submit">نشر للمراجعة</button></div>
+    <p id="communityPostMessage" aria-live="polite"></p><small>المنشور يظهر للجميع بعد موافقة الإدارة. لا يلزم تسجيل حساب.</small>
+  </form>
+  <div class="community-feed-tools"><h3>آخر المنشورات</h3><button id="communityRefreshButton" class="btn btn-outline" type="button">تحديث المنشورات</button></div>
+  <div id="communityFeed" class="community-feed"><p class="empty-state">جارٍ تحميل المنشورات...</p></div>
+</section>
 <section class="search-section" aria-label="البحث عن عقار">
       <div class="section-heading">
         <span class="eyebrow">بحث</span>
@@ -169,6 +181,7 @@
         <a class="btn btn-primary" href="#login">تسجيل الدخول للإدارة</a>
       </div>
       <div id="adminMessage" class="notice" aria-live="polite">يلزم تسجيل الدخول والتحقق من صلاحية المدير لعرض الطلبات.</div>
+      <div id="communityAdminPanel" class="community-admin-panel"></div>
     </section>
 
     <section class="add-section" id="add-property">
