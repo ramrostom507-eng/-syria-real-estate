@@ -272,10 +272,12 @@
         views: Number(x.views || 0), image_views: Number(x.image_views || 0), video_views: Number(x.video_views || 0)
       }]));
       if (viewsResult.error) console.warn("تعذر تحميل إحصائيات المشاهدات:", viewsResult.error.message);
+      let listingViewIncrement = 0;
       if (listingIds.length) {
         const impressionRows = listingIds.map(listing_id => ({ listing_id, event_type: "listing" }));
         const impressionResult = await db.from("listing_views").insert(impressionRows);
         if (impressionResult.error) console.warn("تعذر تسجيل مشاهدات الإعلانات:", impressionResult.error.message);
+        else listingViewIncrement = 1;
       }
       if (likesResult.error) console.warn("تعذر تحميل الإعجابات:", likesResult.error.message);
       if (commentsResult.error) console.warn("تعذر تحميل التعليقات:", commentsResult.error.message);
@@ -332,7 +334,7 @@
               <p class="property-description">${escapeHTML(p.description || "")}</p>
               <p class="property-price">${price}</p>
               <div class="property-view-stats" aria-label="إحصائيات المشاهدة">
-                <span>👁 <strong data-listing-views="${escapeHTML(p.id)}">${(viewCounts.get(p.id)?.views || 0) + 1}</strong> مشاهدة</span>
+                <span>👁 <strong data-listing-views="${escapeHTML(p.id)}">${(viewCounts.get(p.id)?.views || 0) + listingViewIncrement}</strong> مشاهدة</span>
                 <span>📷 <strong data-image-views="${escapeHTML(p.id)}">${viewCounts.get(p.id)?.image_views || 0}</strong></span>
                 <span>🎬 <strong data-video-views="${escapeHTML(p.id)}">${viewCounts.get(p.id)?.video_views || 0}</strong></span>
               </div>
