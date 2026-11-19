@@ -1033,3 +1033,37 @@ button, a {
 @media(max-width:600px){.property-post-head{gap:7px;padding:12px}.property-badge{font-size:10px;padding:3px 7px}.saved-listing-row{align-items:flex-start;flex-direction:column}.saved-listing-row>div:last-child{width:100%}.saved-listing-row .btn{flex:1}}
 
 .community-post-header{position:relative;display:flex;align-items:center;gap:10px}.community-post-header>div:nth-child(2){flex:1;min-width:0}.community-post-menu{position:relative;margin-inline-start:auto}.community-post-menu summary{list-style:none;cursor:pointer;width:38px;height:38px;display:grid;place-items:center;border-radius:50%;font-size:25px;font-weight:900;line-height:1;user-select:none}.community-post-menu summary::-webkit-details-marker{display:none}.community-post-menu summary:hover{background:#f0f2f5}.community-post-menu-list{position:absolute;z-index:30;inset-inline-end:0;top:42px;min-width:190px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 8px 28px #0002;padding:6px;display:grid;gap:3px}.community-post-menu-list button{border:0;background:transparent;text-align:start;padding:10px 12px;border-radius:8px;color:#222;cursor:pointer;font:inherit}.community-post-menu-list button:hover{background:#f3f4f6}.community-post-media-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:0 12px 12px}.community-post-media{display:block;width:100%;max-height:480px;object-fit:contain;background:#111;border-radius:8px}.community-post-media-grid img{background:#f3f3f0}@media(max-width:600px){.community-post-media-grid{grid-template-columns:1fr}.community-post-media{max-height:380px}}
+
+
+/* تجربة التصميم الثاني: تخطيط اجتماعي بثلاثة أعمدة */
+.portal-layout{width:min(1440px,96%);margin:24px auto 48px;display:grid;grid-template-columns:230px minmax(0,1fr) 230px;gap:20px;align-items:start;direction:rtl}
+.portal-main-column{min-width:0}
+.portal-main-column>.community-section{max-width:none;margin:0 0 24px;padding:0}
+.portal-main-column>.search-section,.portal-main-column>.section#properties{max-width:none;margin:0 0 24px}
+.portal-sidebar{display:grid;gap:16px;position:sticky;top:102px}
+.portal-side-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 7px 24px rgba(16,43,42,.055);display:grid;gap:10px}
+.portal-side-kicker{font-size:11px;font-weight:800;color:#9b7b3d}
+.portal-side-card h3{font-size:17px;line-height:1.5;color:var(--green)}
+.portal-side-card p{font-size:12px;color:var(--muted);line-height:1.9}
+.portal-side-card>a:not(.portal-side-cta){padding:8px 10px;border-radius:9px;background:#f7f8f5;font-size:12px;font-weight:700;color:#33443c}
+.portal-side-card>a:not(.portal-side-cta):hover{background:#edf3ee;color:var(--green)}
+.portal-side-highlight{background:linear-gradient(145deg,#102b2a,#1c4940);color:#fff;border-color:#244d42}
+.portal-side-highlight h3,.portal-side-highlight p{color:#fff}
+.portal-side-cta{display:inline-flex;align-items:center;justify-content:center;padding:10px 12px;border:0;border-radius:9px;background:var(--gold);color:#172d28;font:inherit;font-size:12px;font-weight:900;cursor:pointer}
+.portal-follower-number{display:grid;gap:0;padding:12px;border-radius:12px;background:#f4f7f3;text-align:center}
+.portal-follower-number span{font-size:27px;font-weight:900;color:var(--green);line-height:1.4;font-variant-numeric:tabular-nums}
+.portal-follower-number small,.portal-follow-card>small{font-size:11px;color:var(--muted)}
+.portal-main-column .community-heading{text-align:right;margin-bottom:16px}
+.portal-main-column .community-heading h2{font-size:24px}
+.portal-main-column .community-composer{margin-bottom:18px}
+.portal-main-column .community-feed-tools{margin-top:14px}
+.portal-main-column .section-heading h2{font-size:24px}
+.brand{gap:9px}
+.syrian-flag{width:34px;height:23px;display:flex;flex-direction:column;overflow:hidden;border:1px solid #ddd;border-radius:3px;flex:0 0 auto}
+.syrian-flag i{height:33.333%;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:8px;line-height:1}
+.syrian-flag i:nth-child(1){background:#087a3d;color:#e31b36;letter-spacing:1px}
+.syrian-flag i:nth-child(2){background:#fff}
+.syrian-flag i:nth-child(3){background:#111}
+@media(max-width:1050px){.portal-layout{grid-template-columns:minmax(0,1fr) 205px}.portal-sidebar-right{display:none}.portal-sidebar-left{position:static}.portal-main-column>.community-section{padding:0}}
+@media(max-width:760px){.portal-layout{width:94%;display:flex;flex-direction:column;gap:14px;margin:16px auto 32px}.portal-main-column{width:100%;order:1}.portal-sidebar-left{width:100%;order:2;position:static;grid-template-columns:repeat(2,minmax(0,1fr))}.portal-side-card{padding:13px}.portal-side-card h3{font-size:14px}.portal-side-card p{font-size:11px}.portal-main-column .community-heading{text-align:center}.portal-main-column .community-heading h2,.portal-main-column .section-heading h2{font-size:21px}}
+@media(max-width:430px){.portal-sidebar-left{grid-template-columns:1fr}.portal-follower-number{display:flex;align-items:center;justify-content:center;gap:9px}.portal-follower-number span{font-size:22px}}
