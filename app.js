@@ -8,6 +8,27 @@
   const MAX_FILE_SIZE = 50 * 1024 * 1024;
   const $ = (id) => document.getElementById(id);
 
+  function detectMediaFile(original) {
+    const ext = (original.name.split(".").pop() || "").toLowerCase();
+    const byExtension = {
+      jpg:"image/jpeg", jpeg:"image/jpeg", png:"image/png", webp:"image/webp", gif:"image/gif",
+      mp4:"video/mp4", m4v:"video/mp4", webm:"video/webm", mov:"video/quicktime",
+      "3gp":"video/3gpp", "3gpp":"video/3gpp", avi:"video/x-msvideo",
+      mkv:"video/x-matroska", mpg:"video/mpeg", mpeg:"video/mpeg",
+      ogv:"video/ogg", ts:"video/mp2t"
+    };
+    const reported = (original.type || "").toLowerCase();
+    const mime = (!reported || reported === "application/octet-stream" || reported === "binary/octet-stream")
+      ? (byExtension[ext] || reported)
+      : reported;
+    const isImage = mime.startsWith("image/") || ["jpg","jpeg","png","webp","gif"].includes(ext);
+    const isVideo = mime.startsWith("video/") || ["mp4","m4v","webm","mov","3gp","3gpp","avi","mkv","mpg","mpeg","ogv","ts"].includes(ext);
+    if (!isImage && !isVideo) throw new Error("صيغة الملف غير مدعومة: " + original.name);
+    const safeMime = mime && mime !== "application/octet-stream" ? mime : (byExtension[ext] || (isVideo ? "video/mp4" : "image/jpeg"));
+    const file = original.type === safeMime ? original : new File([original], original.name, { type: safeMime, lastModified: original.lastModified });
+    return { file, isImage, isVideo, mime: safeMime };
+  }
+
   const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, c => ({
     "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
   })[c]);
@@ -598,18 +619,18 @@
           const rows = [];
           for (let i = 0; i < files.length; i++) {
             const original = files[i];
-            const file = original.type.startsWith("image/") ? await prepareImageForUpload(original) : original;
-            if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) throw new Error("نوع ملف غير مدعوم: " + original.name);
+            const detected = detectMediaFile(original);
+            const file = detected.isImage ? await prepareImageForUpload(detected.file) : detected.file;
             if (file.size > MAX_FILE_SIZE) throw new Error("حجم الملف أكبر من 50 ميغابايت: " + original.name);
             const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
             const path = `admin/${listingId}/${Date.now()}-${i}-${safeName}`;
             const { error: uploadError } = await db.storage.from(STORAGE_BUCKET).upload(path, file, {
-              cacheControl: "31536000", upsert: false, contentType: file.type
+              cacheControl: "31536000", upsert: false, contentType: detected.isImage && file.type ? file.type : detected.mime
             });
             if (uploadError) throw uploadError;
             rows.push({
               listing_id: listingId, owner_id: null,
-              media_type: file.type.startsWith("image/") ? "image" : "video",
+              media_type: detected.isImage ? "image" : "video",
               storage_path: path, sort_order: i, alt_text: original.name
             });
           }
@@ -660,15 +681,14 @@
       const rows = [];
       for (let index = 0; index < files.length; index++) {
         const original = files[index];
-        const isImage = original.type.startsWith("image/");
-        const isVideo = original.type.startsWith("video/");
-        const file = isImage ? await prepareImageForUpload(original) : original;
-        if (!isImage && !isVideo) throw new Error(`الملف ${original.name} ليس صورة أو فيديو مدعوماً.`);
+        const detected = detectMediaFile(original);
+        const isImage = detected.isImage;
+        const file = isImage ? await prepareImageForUpload(detected.file) : detected.file;
         if (file.size > MAX_FILE_SIZE) throw new Error(`حجم الملف ${original.name} أكبر من 50 ميغابايت.`);
         const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
         const path = `${currentUser.id}/${listingId}/${Date.now()}-${index}-${safeName}`;
         const { error: uploadError } = await db.storage.from(STORAGE_BUCKET).upload(path, file, {
-          cacheControl:"31536000", upsert:false, contentType:file.type
+          cacheControl:"31536000", upsert:false, contentType:isImage && file.type ? file.type : detected.mime
         });
         if (uploadError) throw new Error(`فشل رفع ${file.name}: ${uploadError.message}`);
         rows.push({
@@ -696,16 +716,13 @@
     async function uploadGuestFiles(id,token,files){
       if(files.length>8)throw new Error("يمكن إرفاق 8 ملفات كحد أقصى.");
       for(let i=0;i<files.length;i++){
-        const original=files[i],isImage=original.type.startsWith("image/"),isVideo=original.type.startsWith("video/");
-        const file=isImage?await prepareImageForUpload(original):original;
-        if(!isImage&&!isVideo)throw new Error("يمكن رفع الصور والفيديو فقط.");
+        const original=files[i],detected=detectMediaFile(original),isImage=detected.isImage,isVideo=detected.isVideo;
+        const file=isImage?await prepareImageForUpload(detected.file):detected.file;
         if(file.size>MAX_FILE_SIZE)throw new Error("حجم الملف "+file.name+" يتجاوز 50 ميغابايت.");
-        const allowed=["image/jpeg","image/png","image/webp","image/gif","video/mp4","video/webm","video/quicktime"];
-        if(!allowed.includes(file.type))throw new Error("صيغة الملف "+file.name+" غير مدعومة. استخدم JPG أو PNG أو WEBP أو MP4 أو MOV.");
         const ext=(file.name.split(".").pop()||"file").toLowerCase().replace(/[^a-z0-9]/g,"")||"file";
         const safeName=(file.name.replace(/[^a-zA-Z0-9._-]/g,"-").slice(-70)||("media."+ext));
         const path="guest/"+id+"/"+crypto.randomUUID()+"-"+safeName;
-        const up=await db.storage.from(STORAGE_BUCKET).upload(path,file,{cacheControl:"31536000",upsert:false,contentType:file.type});
+        const up=await db.storage.from(STORAGE_BUCKET).upload(path,file,{cacheControl:"31536000",upsert:false,contentType:isImage && file.type ? file.type : detected.mime});
         if(up.error)throw new Error("تعذر رفع "+file.name+": "+up.error.message);
         const linked=await db.rpc("guest_add_media",{p_listing_id:id,p_token:token,p_storage_path:path,p_media_type:isImage?"image":"video",p_alt_text:file.name,p_sort_order:i});
         if(linked.error)throw new Error("تم رفع الملف لكن تعذر ربطه بالإعلان: "+linked.error.message);
