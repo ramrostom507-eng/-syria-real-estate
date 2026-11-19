@@ -221,6 +221,14 @@
       return data?.signedUrl || "";
     }
 
+    const SOCIAL_GUEST_KEY = "syriaRealEstateSocialGuestV1";
+    function socialGuestId() {
+      let id = localStorage.getItem(SOCIAL_GUEST_KEY);
+      if (!id) { id = crypto.randomUUID(); localStorage.setItem(SOCIAL_GUEST_KEY, id); }
+      return id;
+    }
+    const socialGuest = socialGuestId();
+
     async function renderListings(listings) {
       const grid = $("propertyGrid");
       if (!grid) return;
@@ -253,6 +261,18 @@
         });
       }
 
+      const listingIds = listings.map(p => p.id);
+      const [likesResult, commentsResult, myLikesResult] = listingIds.length ? await Promise.all([
+        db.from("listing_likes").select("listing_id").in("listing_id", listingIds),
+        db.from("listing_comments").select("listing_id").in("listing_id", listingIds),
+        db.from("listing_likes").select("listing_id").eq("guest_id", socialGuest).in("listing_id", listingIds)
+      ]) : [{data:[]},{data:[]},{data:[]}];
+      if (likesResult.error) console.warn("تعذر تحميل الإعجابات:", likesResult.error.message);
+      if (commentsResult.error) console.warn("تعذر تحميل التعليقات:", commentsResult.error.message);
+      const likeCounts = new Map(), commentCounts = new Map();
+      (likesResult.data || []).forEach(x => likeCounts.set(x.listing_id, (likeCounts.get(x.listing_id)||0)+1));
+      (commentsResult.data || []).forEach(x => commentCounts.set(x.listing_id, (commentCounts.get(x.listing_id)||0)+1));
+      const myLiked = new Set((myLikesResult.data || []).map(x=>x.listing_id));
       const cards = listings.map((p, listingIndex) => {
         const media = [...(p.listing_media || [])]
           .sort((a,b) => (a.sort_order || 0) - (b.sort_order || 0));
@@ -301,16 +321,74 @@
               </div>
               <p class="property-description">${escapeHTML(p.description || "")}</p>
               <p class="property-price">${price}</p>
+              <div class="property-social-actions" aria-label="التفاعل مع الإعلان">
+                <button class="social-action ${myLiked.has(p.id) ? "is-liked" : ""}" type="button" data-like-listing="${escapeHTML(p.id)}" aria-pressed="${myLiked.has(p.id)}">❤️ إعجاب <span data-like-count="${escapeHTML(p.id)}">${likeCounts.get(p.id)||0}</span></button>
+                <button class="social-action" type="button" data-comments-toggle="${escapeHTML(p.id)}">💬 تعليق <span data-comment-count="${escapeHTML(p.id)}">${commentCounts.get(p.id)||0}</span></button>
+                <button class="social-action" type="button" data-share-url="${escapeHTML(shareUrl)}" data-share-text="${escapeHTML(shareText)}">↗ مشاركة</button>
+              </div>
               <div class="property-post-actions">
                 ${phone}
                 <a class="btn btn-light property-share" href="${whatsapp}" target="_blank" rel="noopener">واتساب</a>
-                <button class="btn btn-outline property-share" type="button" data-share-url="${escapeHTML(shareUrl)}" data-share-text="${escapeHTML(shareText)}">↗ مشاركة</button>
               </div>
+              <section class="listing-comments" id="comments-${escapeHTML(p.id)}" hidden>
+                <form class="listing-comment-form" data-comment-form="${escapeHTML(p.id)}">
+                  <input name="display_name" maxlength="60" placeholder="اسمك (اختياري)">
+                  <textarea name="body" rows="2" maxlength="1000" required placeholder="اكتب تعليقك أو استفسارك..."></textarea>
+                  <button class="btn btn-primary" type="submit">نشر التعليق</button>
+                  <small>التعليقات ظاهرة للجميع. يرجى عدم نشر أرقام أو معلومات خاصة.</small>
+                </form>
+                <div class="listing-comment-list" data-comment-list="${escapeHTML(p.id)}"></div>
+              </section>
               ${media.length ? `<small class="media-count">📷 ${media.filter(x => x.media_type === "image").length} صور · 🎥 ${media.filter(x => x.media_type === "video").length} فيديو</small>` : ""}
             </div>
           </article>`;
       });
       grid.innerHTML = cards.join("");
+      grid.querySelectorAll("[data-like-listing]").forEach(button => button.addEventListener("click", async () => {
+        const id=button.dataset.likeListing, wasLiked=button.getAttribute("aria-pressed")==="true";
+        button.disabled=true;
+        try {
+          if(wasLiked) {
+            const r=await db.from("listing_likes").delete().eq("listing_id",id).eq("guest_id",socialGuest);
+            if(r.error) throw r.error;
+          } else {
+            const r=await db.from("listing_likes").upsert({listing_id:id,guest_id:socialGuest},{onConflict:"listing_id,guest_id",ignoreDuplicates:true});
+            if(r.error) throw r.error;
+          }
+          button.setAttribute("aria-pressed",String(!wasLiked));
+          button.classList.toggle("is-liked",!wasLiked);
+          const count=button.querySelector("span");
+          count.textContent=String(Math.max(0,Number(count.textContent||0)+(wasLiked?-1:1)));
+        } catch(error) { alert("تعذر تسجيل الإعجاب: "+error.message); }
+        finally { button.disabled=false; }
+      }));
+      grid.querySelectorAll("[data-comments-toggle]").forEach(button => button.addEventListener("click", async () => {
+        const id=button.dataset.commentsToggle, panel=grid.querySelector("#comments-"+CSS.escape(id));
+        if(!panel)return;
+        panel.hidden=!panel.hidden;
+        if(panel.hidden)return;
+        const list=panel.querySelector("[data-comment-list]");
+        list.innerHTML="<p>جارٍ تحميل التعليقات...</p>";
+        const r=await db.from("listing_comments").select("id,display_name,body,created_at").eq("listing_id",id).order("created_at",{ascending:false}).limit(100);
+        if(r.error){list.textContent="تعذر تحميل التعليقات: "+r.error.message;return;}
+        list.innerHTML=(r.data||[]).map(x=>'<article class="listing-comment"><strong>'+escapeHTML(x.display_name||"زائر")+'</strong><p>'+escapeHTML(x.body)+'</p><small>'+new Date(x.created_at).toLocaleString("ar")+'</small></article>').join("") || "<p>لا توجد تعليقات بعد. كن أول من يعلّق.</p>";
+      }));
+      grid.querySelectorAll("[data-comment-form]").forEach(form => form.addEventListener("submit", async ev => {
+        ev.preventDefault();
+        const id=form.dataset.commentForm, body=form.elements.body.value.trim();
+        const displayName=form.elements.display_name.value.trim()||"زائر";
+        if(!body)return;
+        const button=form.querySelector('button[type="submit"]');button.disabled=true;
+        const r=await db.from("listing_comments").insert({listing_id:id,guest_id:socialGuest,display_name:displayName,body});
+        if(r.error){alert("تعذر نشر التعليق: "+r.error.message);button.disabled=false;return;}
+        form.reset();
+        const list=grid.querySelector('[data-comment-list="'+CSS.escape(id)+'"]');
+        const refreshed=await db.from("listing_comments").select("id,display_name,body,created_at").eq("listing_id",id).order("created_at",{ascending:false}).limit(100);
+        if(!refreshed.error) list.innerHTML=(refreshed.data||[]).map(x=>'<article class="listing-comment"><strong>'+escapeHTML(x.display_name||"زائر")+'</strong><p>'+escapeHTML(x.body)+'</p><small>'+new Date(x.created_at).toLocaleString("ar")+'</small></article>').join("");
+        const counter=grid.querySelector('[data-comment-count="'+CSS.escape(id)+'"]');
+        if(counter)counter.textContent=String(Number(counter.textContent||0)+1);
+        button.disabled=false;
+      }));
       grid.querySelectorAll("[data-share-url]").forEach(button => {
         button.addEventListener("click", async () => {
           const url = button.dataset.shareUrl;
