@@ -251,7 +251,7 @@
           batches.push(mediaPaths.slice(i, i + 100));
         }
         const results = await Promise.all(batches.map(paths =>
-          db.storage.from(STORAGE_BUCKET).createSignedUrls(paths, 3600)
+          db.storage.from(STORAGE_BUCKET).createSignedUrls(paths, 604800)
         ));
         results.forEach(({ data, error }) => {
           if (error) console.warn("تعذر إنشاء بعض روابط الصور:", error.message);
