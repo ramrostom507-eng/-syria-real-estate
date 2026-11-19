@@ -239,35 +239,49 @@
         return;
       }
 
-      // أنشئ روابط الصور دفعة واحدة بدلاً من طلب رابط مستقل لكل صورة.
-      const mediaPaths = [...new Set(listings.flatMap(p =>
-        (p.listing_media || []).map(item => item.storage_path).filter(Boolean)
+      // جهّز روابط الصور المصغّرة والفيديو بالتوازي مع بيانات التفاعل.
+      // الصور تُرسل من Supabase بحجم مناسب للبطاقات وجودة أخف، مع رجوع تلقائي للأصل إذا لم تتوفر التحويلات.
+      const imagePaths = [...new Set(listings.flatMap(p =>
+        (p.listing_media || []).filter(m => m.media_type === "image").map(m => m.storage_path).filter(Boolean)
+      ))];
+      const videoPaths = [...new Set(listings.flatMap(p =>
+        (p.listing_media || []).filter(m => m.media_type === "video").map(m => m.storage_path).filter(Boolean)
       ))];
       const signedMap = new Map();
-      if (mediaPaths.length) {
-        // قسّم الطلبات إلى دفعات صغيرة حتى لا يفشل إنشاء الروابط عند كثرة الإعلانات والصور.
-        const batches = [];
-        for (let i = 0; i < mediaPaths.length; i += 100) {
-          batches.push(mediaPaths.slice(i, i + 100));
+      const listingIds = listings.map(p => p.id);
+      const mediaPromise = (async () => {
+        const [imageResult, videoResult] = await Promise.all([
+          imagePaths.length
+            ? db.storage.from(STORAGE_BUCKET).createSignedUrls(imagePaths, 604800, {
+                transform: { width: 960, quality: 68, resize: "contain" }
+              })
+            : Promise.resolve({ data: [], error: null }),
+          videoPaths.length
+            ? db.storage.from(STORAGE_BUCKET).createSignedUrls(videoPaths, 604800)
+            : Promise.resolve({ data: [], error: null })
+        ]);
+        let images = imageResult;
+        if (imageResult.error || (imagePaths.length && (imageResult.data || []).filter(x => x?.signedUrl).length !== imagePaths.length)) {
+          console.warn("تحويل الصور غير متاح؛ سيتم استخدام النسخ الأصلية:", imageResult.error?.message || "بعض الصور لم تُحوّل");
+          images = imagePaths.length
+            ? await db.storage.from(STORAGE_BUCKET).createSignedUrls(imagePaths, 604800)
+            : { data: [], error: null };
         }
-        const results = await Promise.all(batches.map(paths =>
-          db.storage.from(STORAGE_BUCKET).createSignedUrls(paths, 604800)
-        ));
-        results.forEach(({ data, error }) => {
-          if (error) console.warn("تعذر إنشاء بعض روابط الصور:", error.message);
-          (data || []).forEach(item => {
+        [images, videoResult].forEach(result => {
+          if (result.error) console.warn("تعذر إنشاء بعض روابط الوسائط:", result.error.message);
+          (result.data || []).forEach(item => {
             if (item?.path && item?.signedUrl) signedMap.set(item.path, item.signedUrl);
           });
         });
-      }
-
-      const listingIds = listings.map(p => p.id);
-      const [likesResult, commentsResult, myLikesResult, viewsResult] = listingIds.length ? await Promise.all([
+      })();
+      const socialPromise = listingIds.length ? Promise.all([
         db.from("listing_likes").select("listing_id").in("listing_id", listingIds),
         db.from("listing_comments").select("listing_id").in("listing_id", listingIds),
         db.from("listing_likes").select("listing_id").eq("guest_id", socialGuest).in("listing_id", listingIds),
         db.from("listing_view_totals").select("listing_id,views,image_views,video_views").in("listing_id", listingIds)
-      ]) : [{data:[]},{data:[]},{data:[]},{data:[]}];
+      ]) : Promise.resolve([{data:[]},{data:[]},{data:[]},{data:[]}]);
+      const [socialResults] = await Promise.all([socialPromise, mediaPromise]);
+      const [likesResult, commentsResult, myLikesResult, viewsResult] = socialResults;
       const viewCounts = new Map((viewsResult.data || []).map(x => [x.listing_id, {
         views: Number(x.views || 0), image_views: Number(x.image_views || 0), video_views: Number(x.video_views || 0)
       }]));
@@ -561,7 +575,7 @@
             const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
             const path = `admin/${listingId}/${Date.now()}-${i}-${safeName}`;
             const { error: uploadError } = await db.storage.from(STORAGE_BUCKET).upload(path, file, {
-              cacheControl: "3600", upsert: false, contentType: file.type
+              cacheControl: "31536000", upsert: false, contentType: file.type
             });
             if (uploadError) throw uploadError;
             rows.push({
@@ -624,7 +638,7 @@
         const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
         const path = `${currentUser.id}/${listingId}/${Date.now()}-${index}-${safeName}`;
         const { error: uploadError } = await db.storage.from(STORAGE_BUCKET).upload(path, file, {
-          cacheControl:"3600", upsert:false, contentType:file.type
+          cacheControl:"31536000", upsert:false, contentType:file.type
         });
         if (uploadError) throw new Error(`فشل رفع ${file.name}: ${uploadError.message}`);
         rows.push({
@@ -660,7 +674,7 @@
         const ext=(file.name.split(".").pop()||"file").toLowerCase().replace(/[^a-z0-9]/g,"")||"file";
         const safeName=(file.name.replace(/[^a-zA-Z0-9._-]/g,"-").slice(-70)||("media."+ext));
         const path="guest/"+id+"/"+crypto.randomUUID()+"-"+safeName;
-        const up=await db.storage.from(STORAGE_BUCKET).upload(path,file,{cacheControl:"3600",upsert:false,contentType:file.type});
+        const up=await db.storage.from(STORAGE_BUCKET).upload(path,file,{cacheControl:"31536000",upsert:false,contentType:file.type});
         if(up.error)throw new Error("تعذر رفع "+file.name+": "+up.error.message);
         const linked=await db.rpc("guest_add_media",{p_listing_id:id,p_token:token,p_storage_path:path,p_media_type:isImage?"image":"video",p_alt_text:file.name,p_sort_order:i});
         if(linked.error)throw new Error("تم رفع الملف لكن تعذر ربطه بالإعلان: "+linked.error.message);
