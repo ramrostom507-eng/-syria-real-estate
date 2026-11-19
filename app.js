@@ -452,7 +452,7 @@
         const isSaved = getSavedListingIds().includes(p.id);
         const guestOwner = getGuestAds().some(x=>x.id===p.id);
         const tours = toursByListing.get(p.id) || [];
-        const tourMarkup = tours.length ? '<div class="property-3d-actions"><strong>استكشف العقار بشكل تفاعلي</strong>' + tours.map(t => '<button type="button" class="btn btn-outline" data-open-3d data-3d-kind="'+escapeHTML(t.media_kind)+'" data-3d-url="'+escapeHTML(t.url)+'">'+(t.media_kind==="panorama360"?"🌐 جولة 360°":"🏠 عرض ثلاثي الأبعاد")+'</button>').join("") + '</div>' : "";
+        const tourMarkup = tours.length ? '<div class="property-3d-actions"><strong>استكشف العقار بشكل تفاعلي</strong></div>' + tours.map((t, tourIndex) => t.media_kind==="panorama360" ? '<div class="property-3d-inline-wrap"><div id="property3dInline-'+escapeHTML(p.id)+'-'+tourIndex+'" class="property-3d-inline-viewer" data-inline-panorama="'+escapeHTML(t.url)+'" aria-label="جولة بانورامية 360 درجة للعقار"></div><small class="property-3d-inline-hint">اسحب الصورة يميناً ويساراً لاستكشاف العقار بزاوية 360°</small></div>' : '<div class="property-3d-actions"><button type="button" class="btn btn-outline" data-open-3d data-3d-kind="model3d" data-3d-url="'+escapeHTML(t.url)+'">🏠 افتح العرض ثلاثي الأبعاد</button></div>').join("") : "";
         const whatsapp = `https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`;
         return `
           <article id="property-${escapeHTML(p.id)}" class="property-card property-post">
@@ -509,6 +509,33 @@
           </article>`;
       });
       grid.innerHTML = cards.join("");
+      // عرض جولات 360° مباشرة داخل المنشور، دون الحاجة إلى الضغط على زر.
+      grid.querySelectorAll("[data-inline-panorama]").forEach((el) => {
+        const url = el.getAttribute("data-inline-panorama");
+        if (!url) return;
+        if (window.pannellum?.viewer) {
+          try {
+            window.pannellum.viewer(el.id, {
+              type: "equirectangular",
+              panorama: url,
+              autoLoad: true,
+              showZoomCtrl: true,
+              compass: true,
+              mouseZoom: true,
+              hfov: 100
+            });
+          } catch (error) {
+            console.warn("تعذر تشغيل الجولة داخل المنشور:", error);
+            const img = document.createElement("img");
+            img.src = url; img.alt = "صورة بانورامية 360 درجة";
+            el.replaceChildren(img);
+          }
+        } else {
+          const img = document.createElement("img");
+          img.src = url; img.alt = "صورة بانورامية 360 درجة";
+          el.replaceChildren(img);
+        }
+      });
       grid.querySelectorAll("[data-open-3d]").forEach(button => button.addEventListener("click", () => {
         const kind=button.dataset["3dKind"], url=button.dataset["3dUrl"];
         let modal=document.getElementById("property3dModal");
