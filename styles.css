@@ -1288,3 +1288,17 @@ button, a {
 .property-3d-close{position:absolute;top:7px;left:10px;border:0;border-radius:50%;width:34px;height:34px;font-size:25px;line-height:1;background:#edf2ef;color:#183a31;cursor:pointer}
 .property-3d-viewer{width:100%;min-height:260px;overflow:hidden;border-radius:10px}
 @media(max-width:600px){.property-3d-modal{padding:7px}.property-3d-dialog{padding:42px 7px 7px}.property-3d-actions{padding:9px}.property-3d-actions strong{width:100%}}
+
+/* واجهة تعريفية واضحة لتجربة العقارات ثلاثية الأبعاد */
+.immersive-3d-intro{max-width:1180px;margin:28px auto 38px;padding:30px 32px;border:1px solid #d9e5df;border-radius:22px;background:linear-gradient(120deg,#102b2a 0%,#194442 58%,#245b50 100%);color:#fff;display:grid;grid-template-columns:1.05fr .95fr;gap:28px;align-items:center;box-shadow:0 16px 38px rgba(16,43,42,.13)}
+.immersive-3d-kicker{display:inline-block;color:#e5c987;font-size:12px;font-weight:900;letter-spacing:.3px;margin-bottom:9px}
+.immersive-3d-copy h2{font-size:clamp(24px,3vw,36px);line-height:1.35;margin:0 0 10px;color:#fff;font-weight:900}
+.immersive-3d-copy>p{font-size:14px;line-height:1.9;color:rgba(255,255,255,.82);margin:0 0 17px;max-width:600px}
+.immersive-3d-cta{display:inline-flex;align-items:center;justify-content:center;padding:11px 18px;border-radius:10px;background:#c9a45c;color:#102b2a;font-weight:900;text-decoration:none}
+.immersive-3d-copy>small{display:block;margin-top:11px;color:rgba(255,255,255,.68);font-size:11px;line-height:1.7}
+.immersive-3d-options{display:grid;gap:10px}
+.immersive-3d-option{display:flex;align-items:center;gap:14px;padding:13px 15px;border:1px solid rgba(255,255,255,.17);border-radius:14px;background:rgba(255,255,255,.08)}
+.immersive-3d-icon{flex:0 0 43px;width:43px;height:43px;display:grid;place-items:center;border-radius:12px;background:rgba(201,164,92,.18);color:#e5c987;font-size:27px}
+.immersive-3d-option strong{display:block;color:#fff;font-size:14px;margin-bottom:3px}
+.immersive-3d-option p{margin:0;color:rgba(255,255,255,.72);font-size:11px;line-height:1.65}
+@media(max-width:760px){.immersive-3d-intro{margin:18px 12px 28px;padding:22px 17px;grid-template-columns:1fr;gap:19px;border-radius:17px}.immersive-3d-copy h2{font-size:25px}.immersive-3d-option{padding:11px 12px}.immersive-3d-copy>p{font-size:13px}}
