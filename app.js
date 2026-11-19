@@ -345,20 +345,16 @@
       });
       grid.innerHTML = cards.join("");
       grid.querySelectorAll("[data-like-listing]").forEach(button => button.addEventListener("click", async () => {
-        const id=button.dataset.likeListing, wasLiked=button.getAttribute("aria-pressed")==="true";
+        const id=button.dataset.likeListing;
+        if(button.getAttribute("aria-pressed")==="true") return;
         button.disabled=true;
         try {
-          if(wasLiked) {
-            const r=await db.from("listing_likes").delete().eq("listing_id",id).eq("guest_id",socialGuest);
-            if(r.error) throw r.error;
-          } else {
-            const r=await db.from("listing_likes").upsert({listing_id:id,guest_id:socialGuest},{onConflict:"listing_id,guest_id",ignoreDuplicates:true});
-            if(r.error) throw r.error;
-          }
-          button.setAttribute("aria-pressed",String(!wasLiked));
-          button.classList.toggle("is-liked",!wasLiked);
+          const r=await db.from("listing_likes").upsert({listing_id:id,guest_id:socialGuest},{onConflict:"listing_id,guest_id",ignoreDuplicates:true});
+          if(r.error) throw r.error;
+          button.setAttribute("aria-pressed","true");
+          button.classList.add("is-liked");
           const count=button.querySelector("span");
-          count.textContent=String(Math.max(0,Number(count.textContent||0)+(wasLiked?-1:1)));
+          count.textContent=String(Number(count.textContent||0)+1);
         } catch(error) { alert("تعذر تسجيل الإعجاب: "+error.message); }
         finally { button.disabled=false; }
       }));
