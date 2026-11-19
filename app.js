@@ -233,41 +233,54 @@
       }
 
       const cards = await Promise.all(listings.map(async (p) => {
-        const media = [...(p.listing_media || [])].sort((a,b) => a.sort_order - b.sort_order);
-        let visual = '<div class="property-placeholder" aria-label="لا توجد صورة">⌂</div>';
-        const first = media[0];
-        if (first) {
-          const url = await signedMediaUrl(first.storage_path);
-          if (url && first.media_type === "image") {
-            visual = `<img src="${escapeHTML(url)}" alt="${escapeHTML(p.title)}" loading="lazy"
-              style="width:100%;height:220px;object-fit:cover">`;
-          } else if (url && first.media_type === "video") {
-            visual = `<video src="${escapeHTML(url)}" controls preload="metadata"
-              style="width:100%;height:220px;object-fit:cover"></video>`;
+        const media = [...(p.listing_media || [])].sort((a,b) => (a.sort_order || 0) - (b.sort_order || 0));
+        const mediaItems = await Promise.all(media.map(async (item) => {
+          const url = await signedMediaUrl(item.storage_path);
+          if (!url) return "";
+          if (item.media_type === "image") {
+            return `<a class="property-media-item" href="${escapeHTML(url)}" target="_blank" rel="noopener">
+              <img src="${escapeHTML(url)}" alt="${escapeHTML(item.alt_text || p.title)}" loading="lazy"></a>`;
           }
-        }
+          if (item.media_type === "video") {
+            return `<div class="property-media-item"><video src="${escapeHTML(url)}" controls playsinline preload="metadata"></video></div>`;
+          }
+          return "";
+        }));
+        const gallery = mediaItems.filter(Boolean).join("");
+        const mediaMarkup = gallery
+          ? `<div class="property-media-gallery" aria-label="صور وفيديوهات العقار">${gallery}</div>`
+          : `<div class="property-placeholder" aria-label="لا توجد صور مرفقة">⌂</div>`;
         const price = p.price !== null && p.price !== undefined
           ? `${escapeHTML(Number(p.price).toLocaleString("en-US"))} ${escapeHTML(p.currency || "")}`
           : "السعر عند الاستفسار";
         const phone = p.contact_phone
           ? `<a class="btn btn-outline property-contact" href="tel:${escapeHTML(p.contact_phone)}">اتصل بالمعلن</a>`
           : "";
+        const shareText = [p.title, p.governorate, p.city, price].filter(Boolean).join(" — ");
+        const shareUrl = window.location.origin + window.location.pathname + "#properties";
+        const whatsapp = `https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`;
         return `
-          <article class="property-card">
-            <div class="property-image">${visual}
-              <span class="property-badge">${escapeHTML(purposeLabel[p.listing_type] || p.listing_type)}</span>
+          <article class="property-card property-post">
+            <div class="property-post-head">
+              <span class="property-post-mark">⌂</span>
+              <div><strong>${escapeHTML(p.title)}</strong>
+                <small>${escapeHTML(p.governorate || "")}${p.city ? " — " + escapeHTML(p.city) : ""}${p.neighborhood ? " — " + escapeHTML(p.neighborhood) : ""}</small></div>
+              <span class="property-badge">${escapeHTML(purposeLabel[p.listing_type] || p.listing_type || "عقار")}</span>
             </div>
+            ${mediaMarkup}
             <div class="property-info">
-              <h3>${escapeHTML(p.title)}</h3>
-              <p>${escapeHTML(p.governorate || "")}${p.city ? " — " + escapeHTML(p.city) : ""}
-                ${p.neighborhood ? " — " + escapeHTML(p.neighborhood) : ""}</p>
               <div class="property-meta">
-                <span>${escapeHTML(typeLabel[p.property_type] || p.property_type)}</span>
+                <span> ${escapeHTML(typeLabel[p.property_type] || p.property_type || "عقار")}</span>
                 ${p.area_m2 ? `<span>${escapeHTML(p.area_m2)} م²</span>` : ""}
                 ${p.bedrooms ? `<span>${escapeHTML(p.bedrooms)} غرف</span>` : ""}
               </div>
-              <p>${escapeHTML(p.description)}</p>
-              <p class="property-price">${price}</p>${phone}
+              <p class="property-description">${escapeHTML(p.description || "")}</p>
+              <p class="property-price">${price}</p>
+              <div class="property-post-actions">
+                ${phone}
+                <a class="btn btn-light property-share" href="${whatsapp}" target="_blank" rel="noopener">مشاركة عبر واتساب</a>
+              </div>
+              ${media.length ? `<small class="media-count">📷 ${media.filter(x => x.media_type === "image").length} صور · 🎥 ${media.filter(x => x.media_type === "video").length} فيديو</small>` : ""}
             </div>
           </article>`;
       }));
