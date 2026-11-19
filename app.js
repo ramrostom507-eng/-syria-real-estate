@@ -87,7 +87,7 @@
         <div>
           <span class="eyebrow">حسابك العقاري</span>
           <h2>حسابك على سوريا عقارات</h2>
-          <p>سجّل الدخول لإضافة إعلاناتك ومتابعة طلباتك.</p>
+          <p>هذا الدخول للمدير فقط. يمكنك نشر إعلانك وتعديله دون حساب.</p>
         </div>
         <div style="max-width:430px;width:100%">
           <input id="accountName" type="text" autocomplete="name" placeholder="الاسم الكامل"
@@ -98,7 +98,6 @@
             placeholder="كلمة المرور (6 أحرف على الأقل)" style="width:100%;margin:6px 0;padding:12px">
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
             <button class="btn btn-primary" id="signInButton" type="button">تسجيل الدخول</button>
-            <button class="btn btn-outline" id="signUpButton" type="button">إنشاء حساب</button>
             <button class="btn btn-outline" id="signOutButton" type="button" hidden>تسجيل الخروج</button>
           </div>
           <p id="accountMessage" aria-live="polite"></p>
