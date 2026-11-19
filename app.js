@@ -553,7 +553,7 @@
       }));
       grid.querySelectorAll("[data-post-save]").forEach(button=>button.addEventListener("click",async()=>{
         const id=button.dataset.postSave,willSave=!getSavedListingIds().includes(id);
-        setSavedListing(id,willSave);await renderSavedListings();await loadListings();
+        setSavedListing(id,willSave);button.textContent=willSave?"✓ إزالة من المحفوظات":"🔖 حفظ المنشور";await renderSavedListings();
       }));
       grid.querySelectorAll("[data-post-copy]").forEach(button=>button.addEventListener("click",async()=>{
         const url=button.dataset.copyUrl;
@@ -1019,7 +1019,7 @@
     $("communityRefreshButton")?.addEventListener("click",loadCommunityFeed);
     $("savedListings")?.addEventListener("click",async ev=>{
       const remove=ev.target.closest("[data-remove-saved]"),open=ev.target.closest("[data-open-saved]");
-      if(remove){setSavedListing(remove.dataset.removeSaved,false);await renderSavedListings();await loadListings();return;}
+      if(remove){setSavedListing(remove.dataset.removeSaved,false);await renderSavedListings();const card=document.querySelector('[data-post-save="'+CSS.escape(remove.dataset.removeSaved)+'"]');if(card)card.textContent="🔖 حفظ المنشور";return;}
       if(open){document.getElementById("property-"+CSS.escape(open.dataset.openSaved))?.scrollIntoView({behavior:"smooth",block:"center"});}
     });
     $("communityFeed")?.addEventListener("click",async ev=>{const like=ev.target.closest("[data-community-like]"),focus=ev.target.closest("[data-community-focus]"),report=ev.target.closest("[data-community-report]");if(focus){document.querySelector('[data-community-comment="'+focus.dataset.communityFocus+'"] input[name="body"]')?.focus();return;}if(like){const id=like.dataset.communityLike,t=communityToken();like.disabled=true;const old=await db.from("community_post_reactions").select("post_id").eq("post_id",id).eq("guest_token",t).maybeSingle();const r=old.data?await db.from("community_post_reactions").delete().eq("post_id",id).eq("guest_token",t):await db.from("community_post_reactions").insert({post_id:id,guest_token:t,reaction:"like"});if(r.error)window.alert("تعذر تحديث الإعجاب: "+r.error.message);await loadCommunityFeed();return;}if(report){const reason=window.prompt("ما سبب الإبلاغ عن المنشور؟");if(!reason?.trim())return;const r=await db.from("community_post_reports").insert({post_id:report.dataset.communityReport,guest_token:communityToken(),reason:reason.trim()});if(r.error)window.alert("تعذر إرسال البلاغ: "+r.error.message);else window.alert("تم إرسال البلاغ للإدارة.");}});
