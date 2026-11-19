@@ -600,8 +600,22 @@
       const westernDigits = raw
         .replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
         .replace(/[۰-۹]/g, d => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)));
-      const phoneMatch = westernDigits.match(/(?:\+|00)?\d[\d\s().-]{5,}\d/);
-      const phone = phoneMatch ? phoneMatch[0].replace(/[^\d+]/g, "") : null;
+      // ابحث عن رقم الهاتف داخل كل سطر/عبارة، ولا تلتقط الأسعار أو المساحات كأنها هاتف.
+      const phoneLabels = /هاتف|موبايل|جوال|للتواصل|اتصال|واتساب|واتس|رقم التواصل|رقم الهاتف/i;
+      const phonePattern = /(?:\+|00)?\s*\d(?:[\d\s().-]{3,18}\d)/g;
+      const phoneCandidates = [];
+      westernDigits.split(/[\r\n،,؛;.!؟]/).forEach(line => {
+        const labeled = phoneLabels.test(line);
+        for (const match of line.matchAll(phonePattern)) {
+          const value = match[0].replace(/[^\d+]/g, "");
+          const digitCount = value.replace(/\D/g, "").length;
+          if (digitCount >= 7 && digitCount <= 15) {
+            phoneCandidates.push({ value, priority: labeled ? 0 : 1 });
+          }
+        }
+      });
+      phoneCandidates.sort((a, b) => a.priority - b.priority);
+      const phone = phoneCandidates[0]?.value || null;
       return {title:first||"إعلان عقاري جديد",governorate,purpose,type,phone};
     }
     $("propertyForm")?.addEventListener("submit",async ev=>{
