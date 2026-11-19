@@ -413,23 +413,17 @@
         return;
       }
       const title = $("listingTitle")?.value.trim() || "";
-      const listingType = purposeMap[$("listingPurpose")?.value] || "";
-      const propertyType = typeMap[$("listingType")?.value] || "";
       const governorate = $("listingCity")?.value || "";
-      const priceText = $("listingPrice")?.value.trim() || "";
+      const category = $("listingCategory")?.value || "";
+      const [listingType, propertyType] = category.split("|");
       const contactPhone = $("listingPhone")?.value.trim() || "";
       const description = $("listingDetails")?.value.trim() || "";
-      if (!title || !listingType || !propertyType || !governorate || !contactPhone || !description) {
-        setMessage("formMessage", "يرجى تعبئة جميع الحقول الأساسية قبل الإرسال.", true);
+      if (!title || !governorate || !listingType || !propertyType || !contactPhone) {
+        setMessage("formMessage", "أدخل عنوان الإعلان والمحافظة ونوع الإعلان ورقم التواصل.", true);
         return;
       }
       if (title.length < 5) {
         setMessage("formMessage", "عنوان الإعلان يجب ألا يقل عن 5 أحرف.", true);
-        return;
-      }
-      const price = priceText ? Number(priceText.replace(/,/g, "")) : null;
-      if (priceText && (!Number.isFinite(price) || price < 0)) {
-        setMessage("formMessage", "السعر يجب أن يكون رقماً صحيحاً غير سالب.", true);
         return;
       }
       const button = event.submitter || $("propertyForm").querySelector('button[type="submit"]');
@@ -441,7 +435,7 @@
           owner_id: null,
           title, description, listing_type: listingType, property_type: propertyType,
           country: "سوريا", governorate, city: governorate,
-          price, currency: "USD", contact_phone: contactPhone, status: "pending"
+          price: null, currency: "USD", contact_phone: contactPhone, status: "pending"
         }).select("id").single();
         if (error) throw error;
         savedId = data.id;
