@@ -1302,3 +1302,11 @@ button, a {
 .immersive-3d-option strong{display:block;color:#fff;font-size:14px;margin-bottom:3px}
 .immersive-3d-option p{margin:0;color:rgba(255,255,255,.72);font-size:11px;line-height:1.65}
 @media(max-width:760px){.immersive-3d-intro{margin:18px 12px 28px;padding:22px 17px;grid-template-columns:1fr;gap:19px;border-radius:17px}.immersive-3d-copy h2{font-size:25px}.immersive-3d-option{padding:11px 12px}.immersive-3d-copy>p{font-size:13px}}
+
+/* جولة 360° ظاهرة ومباشرة داخل منشور العقار */
+.property-3d-inline-wrap{margin:0;background:#102b2a}
+.property-3d-inline-viewer{width:100%;height:clamp(280px,58vw,520px);min-height:280px;background:#172b28;overflow:hidden}
+.property-3d-inline-viewer img{display:block;width:100%;height:100%;object-fit:contain}
+.property-3d-inline-hint{display:block;padding:8px 12px;background:#f4f8f5;color:#36534a;font-size:11px;line-height:1.6}
+.property-3d-inline-wrap .pnlm-container{width:100%;height:100%}
+@media(max-width:600px){.property-3d-inline-viewer{height:320px;min-height:320px}}
