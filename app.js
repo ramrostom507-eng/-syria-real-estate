@@ -331,7 +331,7 @@
                 ${priority ? 'fetchpriority="high"' : ""}></a>`;
           }
           if (item.media_type === "video") {
-            return `<div class="property-media-item"><video src="${escapeHTML(url)}" data-track-video="${escapeHTML(item.id)}" controls playsinline preload="none"></video></div>`;
+            return `<div class="property-media-item"><video src="${escapeHTML(url)}" data-track-video="${escapeHTML(item.id)}" controls playsinline preload="metadata"></video><a class="text-link" href="${escapeHTML(url)}" target="_blank" rel="noopener">إذا لم يعمل تشغيل الفيديو، افتحه هنا</a></div>`;
           }
           return "";
         });
