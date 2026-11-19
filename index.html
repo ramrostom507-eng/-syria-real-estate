@@ -189,14 +189,14 @@
               <option value="sale|warehouse">مستودع للبيع</option><option value="rent|warehouse">مستودع للإيجار</option>
               <option value="investment|other">فرصة استثمارية أخرى</option>
             </select></div>
-          <div class="field"><label for="listingDetails">التفاصيل (اختياري)</label>
-            <textarea id="listingDetails" rows="3" placeholder="السعر، المساحة، عدد الغرف، المنطقة... اكتب المتوفر عندك فقط"></textarea></div>
           <div class="field"><label for="listingPhone">رقم الهاتف أو واتساب</label>
             <input id="listingPhone" type="tel" required placeholder="رقم التواصل"></div>
           <div class="field media-upload-field">
-            <label for="listingFiles">صور وفيديو العقار (اختياري)</label>
+            <label for="listingDetails">اكتب تفاصيل إعلانك وأضف الصور والفيديو بمكان واحد</label>
+            <textarea id="listingDetails" rows="6" placeholder="اكتب كل ما تريد عن العقار بطريقتك: الموقع، السعر، المساحة، عدد الغرف، حالة العقار، طريقة التواصل أو أي معلومة أخرى..."></textarea>
+            <label for="listingFiles">＋ إضافة صور أو فيديو</label>
             <input id="listingFiles" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple>
-            <small>حتى 8 ملفات، بحد أقصى 50 ميغابايت للملف.</small>
+            <small>أضف الصور والفيديو مع التفاصيل مباشرة — حتى 8 ملفات، 50 ميغابايت للملف.</small>
           </div>
         </section>
         <button class="btn btn-primary" type="submit">نشر الإعلان للمراجعة</button>
