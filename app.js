@@ -682,6 +682,14 @@
         panel.textContent = "تعذر تحميل الطلبات: " + error.message;
         return;
       }
+      const pending3dResult = data?.length
+        ? await db.from("listing_3d_media").select("listing_id,media_kind,storage_path,original_name").in("listing_id",data.map(x=>x.id))
+        : {data:[],error:null};
+      if(pending3dResult.error)console.warn("تعذر تحميل ملفات 3D للمراجعة:",pending3dResult.error.message);
+      const pending3dPaths=(pending3dResult.data||[]).map(x=>x.storage_path).filter(Boolean),pending3dUrls=new Map();
+      for(let i=0;i<pending3dPaths.length;i+=100){const sr=await db.storage.from("property-3d").createSignedUrls(pending3dPaths.slice(i,i+100),3600);(sr.data||[]).forEach(x=>{if(x?.path&&x?.signedUrl)pending3dUrls.set(x.path,x.signedUrl);});}
+      const pending3dByListing=new Map();
+      (pending3dResult.data||[]).forEach(x=>{const url=pending3dUrls.get(x.storage_path);if(!url)return;if(!pending3dByListing.has(x.listing_id))pending3dByListing.set(x.listing_id,[]);pending3dByListing.get(x.listing_id).push({...x,url});});
       const { data: allListings, error: allError } = await db.from("listings")
         .select(listingSelect).in("status", ["approved","pending"])
         .order("created_at", { ascending: false });
@@ -735,6 +743,7 @@
                 | العملية: ${escapeHTML(purposeLabel[p.listing_type] || p.listing_type || "")}</p>
               <p>السعر: ${p.price == null ? "غير محدد" : escapeHTML(p.price) + " " + escapeHTML(p.currency || "")}
                 | هاتف التواصل: ${escapeHTML(p.contact_phone || "")}</p>
+              ${(pending3dByListing.get(p.id)||[]).length ? '<div class="property-3d-actions"><strong>مرفقات 3D للمراجعة:</strong>'+(pending3dByListing.get(p.id)||[]).map(x=>'<a class="btn btn-outline" href="'+escapeHTML(x.url)+'" target="_blank" rel="noopener">'+(x.media_kind==="panorama360"?"فتح صورة 360°":"فتح ملف النموذج 3D")+'</a>').join("")+'</div>' : ''}
               <div style="display:flex;gap:8px;flex-wrap:wrap">
                 <button class="btn btn-primary" type="button" data-listing-action="approve" data-listing-id="${escapeHTML(p.id)}">✓ موافقة ونشر</button>
                 <button class="btn btn-outline" type="button" data-listing-action="reject" data-listing-id="${escapeHTML(p.id)}">رفض الطلب</button>
