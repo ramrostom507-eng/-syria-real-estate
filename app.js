@@ -499,14 +499,33 @@
       const r=await db.rpc("guest_get_listing",{p_listing_id:id,p_token:token});
       if(r.error||!r.data){panel.textContent="تعذر العثور على الإعلان المحفوظ على هذا الجهاز.";return;}
       const p=r.data;
+      const mediaRows=Array.isArray(p.media)?p.media:[];
+      const mediaCards=await Promise.all(mediaRows.map(async m=>{
+        const url=await signedMediaUrl(m.storage_path);
+        const preview=m.media_type==="image"
+          ? '<img src="'+escapeHTML(url)+'" alt="'+escapeHTML(m.alt_text||"صورة الإعلان")+'" style="width:100%;max-height:150px;object-fit:cover;border-radius:10px">'
+          : '<video src="'+escapeHTML(url)+'" controls playsinline style="width:100%;max-height:150px;border-radius:10px"></video>';
+        return '<div class="guest-media-edit-item" style="display:grid;gap:6px;border:1px solid #ddd;border-radius:12px;padding:8px;min-width:130px;max-width:180px">'+preview+
+          '<button class="btn btn-outline" type="button" data-remove-media="'+escapeHTML(m.id)+'">حذف هذه الوسائط</button></div>';
+      }));
       panel.innerHTML='<div class="guest-edit-card"><h3>إدارة إعلانك</h3><p>حالة الإعلان: <strong>'+(p.status==="approved"?"منشور":p.status==="pending"?"قيد المراجعة":"غير منشور")+'</strong></p>'+
-       '<form id="guestEditForm" class="guest-edit-form"><div class="field"><label>عنوان الإعلان</label><input id="guestEditTitle" required maxlength="180" value="'+escapeHTML(p.title)+'"></div>'+
-       '<div class="field"><label>المحافظة</label><select id="guestEditGovernorate" required>'+guestOptions(guestGovernorates.map(v=>[v,v]),p.governorate)+'</select></div>'+
-       '<div class="field"><label>نوع الإعلان</label><select id="guestEditCategory" required>'+guestOptions(guestCategories,p.listing_type+"|"+p.property_type)+'</select></div>'+
-       '<div class="field"><label>رقم التواصل</label><input id="guestEditPhone" type="tel" required value="'+escapeHTML(p.contact_phone||"")+'"></div>'+
-       '<div class="field"><label>التفاصيل</label><textarea id="guestEditDescription" rows="4">'+escapeHTML(p.description||"")+'</textarea></div>'+
-       '<div class="field"><label>إضافة صور أو فيديو</label><input id="guestEditFiles" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple><small>حتى 8 ملفات، 50 ميغابايت للملف.</small></div>'+
-       '<div class="guest-edit-actions"><button class="btn btn-primary" type="submit">حفظ التعديلات</button><button class="btn btn-outline" id="guestDeleteButton" type="button">حذف الإعلان</button></div><p id="guestEditMessage" aria-live="polite"></p></form></div>';
+       '<form id="guestEditForm" class="guest-edit-form">'+
+       '<section class="guest-edit-group"><h4>1 — معلومات العقار</h4><div class="field"><label>عنوان الإعلان</label><input id="guestEditTitle" required maxlength="180" value="'+escapeHTML(p.title)+'"></div>'+
+       '<div class="field"><label>تفاصيل العقار</label><textarea id="guestEditDescription" rows="4">'+escapeHTML(p.description||"")+'</textarea></div></section>'+
+       '<section class="guest-edit-group"><h4>2 — الموقع ونوع الإعلان</h4><div class="field"><label>المحافظة</label><select id="guestEditGovernorate" required>'+guestOptions(guestGovernorates.map(v=>[v,v]),p.governorate)+'</select></div>'+
+       '<div class="field"><label>نوع الإعلان</label><select id="guestEditCategory" required>'+guestOptions(guestCategories,p.listing_type+"|"+p.property_type)+'</select></div></section>'+
+       '<section class="guest-edit-group"><h4>3 — التواصل والصور</h4><div class="field"><label>رقم التواصل</label><input id="guestEditPhone" type="tel" required value="'+escapeHTML(p.contact_phone||"")+'"></div>'+
+       '<div class="field"><label>الصور والفيديو الحالية</label><div class="guest-media-edit-list" style="display:flex;gap:10px;flex-wrap:wrap">'+(mediaCards.join("")||'<small>لا توجد صور مرفقة حالياً.</small>')+'</div></div>'+
+       '<div class="field"><label>إضافة صور أو فيديو جديد</label><input id="guestEditFiles" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple><small>يمكن إضافة حتى 8 ملفات في كل مرة، 50 ميغابايت للملف.</small></div></section>'+
+       '<div class="guest-edit-actions"><button class="btn btn-primary" type="submit">حفظ التعديلات</button><button class="btn btn-outline" id="guestDeleteButton" type="button">حذف الإعلان كاملاً</button></div><p id="guestEditMessage" aria-live="polite"></p></form></div>';
+      panel.querySelectorAll("button[data-remove-media]").forEach(btn=>btn.addEventListener("click",async()=>{
+        if(!window.confirm("حذف هذه الصورة أو الفيديو من المنشور؟"))return;
+        btn.disabled=true;
+        const removed=await db.rpc("guest_remove_media",{p_listing_id:id,p_token:token,p_media_id:btn.dataset.removeMedia});
+        if(removed.error||!removed.data){btn.disabled=false;setMessage("guestEditMessage","تعذر حذف الوسائط: "+(removed.error?.message||"تعذر التحقق من الصلاحية"),true);return;}
+        btn.closest(".guest-media-edit-item")?.remove();
+        setMessage("guestEditMessage","تم حذف الوسائط من الإعلان. احفظ التعديلات لإرسال الإعلان للمراجعة.");
+      }));
       $("guestEditForm").addEventListener("submit",async ev=>{ev.preventDefault();const c=$("guestEditCategory").value.split("|"),b=ev.submitter,files=Array.from($("guestEditFiles").files||[]);if(b)b.disabled=true;
         try{
           const u=await db.rpc("guest_update_listing",{p_listing_id:id,p_token:token,p_title:$("guestEditTitle").value.trim(),p_description:$("guestEditDescription").value.trim(),p_listing_type:c[0],p_property_type:c[1],p_governorate:$("guestEditGovernorate").value,p_contact_phone:$("guestEditPhone").value.trim()});

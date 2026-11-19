@@ -169,55 +169,42 @@
       </div>
 
       <form id="propertyForm" class="property-form">
-        <div class="form-grid">
-          <div class="field">
-            <label for="listingTitle">عنوان الإعلان</label>
-            <input id="listingTitle" required maxlength="120" placeholder="مثلاً: شقة للبيع في دمشق — المزة">
-          </div>
-          <div class="field">
-            <label for="listingCity">المحافظة</label>
+        <section class="guest-edit-group">
+          <h3>1 — معلومات العقار</h3>
+          <div class="field"><label for="listingTitle">عنوان الإعلان</label>
+            <input id="listingTitle" required maxlength="120" placeholder="مثلاً: شقة للبيع في دمشق — المزة"></div>
+          <div class="field"><label for="listingDetails">تفاصيل العقار (اختياري)</label>
+            <textarea id="listingDetails" rows="3" placeholder="اكتب السعر والمساحة وعدد الغرف والمنطقة وأي تفاصيل مهمة..."></textarea></div>
+        </section>
+        <section class="guest-edit-group">
+          <h3>2 — الموقع ونوع الإعلان</h3>
+          <div class="field"><label for="listingCity">المحافظة</label>
             <select id="listingCity" required>
               <option value="">اختر المحافظة</option>
-              <option>دمشق</option><option>ريف دمشق</option><option>حلب</option>
-              <option>حمص</option><option>حماة</option><option>اللاذقية</option>
-              <option>طرطوس</option><option>إدلب</option><option>درعا</option>
-              <option>السويداء</option><option>القنيطرة</option><option>دير الزور</option>
-              <option>الرقة</option><option>الحسكة</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="listingCategory">نوع الإعلان</label>
+              <option>دمشق</option><option>ريف دمشق</option><option>حلب</option><option>حمص</option><option>حماة</option><option>اللاذقية</option><option>طرطوس</option><option>إدلب</option><option>درعا</option><option>السويداء</option><option>القنيطرة</option><option>دير الزور</option><option>الرقة</option><option>الحسكة</option>
+            </select></div>
+          <div class="field"><label for="listingCategory">نوع الإعلان</label>
             <select id="listingCategory" required>
               <option value="">اختر نوع الإعلان</option>
-              <option value="sale|apartment">شقة للبيع</option>
-              <option value="rent|apartment">شقة للإيجار</option>
-              <option value="sale|house">منزل أو فيلا للبيع</option>
-              <option value="rent|house">منزل أو فيلا للإيجار</option>
-              <option value="sale|land">أرض للبيع</option>
-              <option value="investment|land">أرض للاستثمار</option>
-              <option value="sale|commercial">محل تجاري للبيع</option>
-              <option value="rent|commercial">محل تجاري للإيجار</option>
-              <option value="sale|office">مكتب للبيع</option>
-              <option value="rent|office">مكتب للإيجار</option>
-              <option value="sale|warehouse">مستودع للبيع</option>
-              <option value="rent|warehouse">مستودع للإيجار</option>
+              <option value="sale|apartment">شقة للبيع</option><option value="rent|apartment">شقة للإيجار</option>
+              <option value="sale|house">منزل أو فيلا للبيع</option><option value="rent|house">منزل أو فيلا للإيجار</option>
+              <option value="sale|land">أرض للبيع</option><option value="investment|land">أرض للاستثمار</option>
+              <option value="sale|commercial">محل تجاري للبيع</option><option value="rent|commercial">محل تجاري للإيجار</option>
+              <option value="sale|office">مكتب للبيع</option><option value="rent|office">مكتب للإيجار</option>
+              <option value="sale|warehouse">مستودع للبيع</option><option value="rent|warehouse">مستودع للإيجار</option>
               <option value="investment|other">فرصة استثمارية أخرى</option>
-            </select>
+            </select></div>
+        </section>
+        <section class="guest-edit-group">
+          <h3>3 — التواصل والصور</h3>
+          <div class="field"><label for="listingPhone">رقم التواصل</label>
+            <input id="listingPhone" type="tel" required placeholder="رقم الهاتف أو واتساب"></div>
+          <div class="field media-upload-field">
+            <label for="listingFiles">صور وفيديو العقار</label>
+            <input id="listingFiles" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple>
+            <small>أرفق حتى 8 صور أو فيديوهات مباشرة مع الإعلان. الحد الأقصى 50 ميغابايت لكل ملف.</small>
           </div>
-          <div class="field">
-            <label for="listingPhone">رقم التواصل</label>
-            <input id="listingPhone" type="tel" required placeholder="رقم الهاتف أو واتساب">
-          </div>
-        </div>
-        <div class="field">
-          <label for="listingDetails">تفاصيل إضافية (اختياري)</label>
-          <textarea id="listingDetails" rows="3" placeholder="اكتب السعر والمساحة وعدد الغرف والمنطقة وأي معلومات تهم المشتري..."></textarea>
-        </div>
-        <div class="field media-upload-field">
-          <label for="listingFiles">صور وفيديو العقار</label>
-          <input id="listingFiles" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple>
-          <small>أرفق حتى 8 صور أو فيديوهات مباشرة مع الإعلان. الحد الأقصى 50 ميغابايت لكل ملف.</small>
-        </div>
+        </section>
         <button class="btn btn-primary" type="submit">نشر الإعلان للمراجعة</button>
         <p id="formMessage" class="form-message" aria-live="polite"></p>
         <small>إعلانك لا يظهر للعامة إلا بعد مراجعة الإدارة والموافقة عليه.</small>
@@ -246,6 +233,6 @@
     <p class="copyright">© <span id="currentYear"></span> سوريا عقارات. جميع الحقوق محفوظة.</p>
   </footer>
 
-  <script src="app.js?v=20261119-media1"></script>
+  <script src="app.js?v=20261119-media2"></script>
 </body>
 </html>
