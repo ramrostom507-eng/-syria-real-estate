@@ -1012,3 +1012,22 @@ button, a {
 
 .community-media-label{font-size:13px;font-weight:800;color:var(--green);cursor:pointer}.community-composer input[type=file]{font-size:12px;padding:8px}.community-post-media-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:0 12px 12px}.community-post-media{width:100%;max-height:430px;object-fit:contain;background:#111;border-radius:8px}.community-post-media-grid img{background:#f3f3f0}@media(max-width:600px){.community-post-media-grid{grid-template-columns:1fr}.community-post-media{max-height:360px}}
 .community-admin-media-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.community-admin-media{width:100%;max-height:230px;object-fit:contain;background:#111;border-radius:8px}
+
+/* قائمة خيارات المنشور */
+.property-post-head{position:relative;display:flex;align-items:center;gap:10px;padding:14px 16px}
+.property-post-title{min-width:0;flex:1}
+.property-post-title strong,.property-post-title small{display:block}
+.property-post-title small{color:var(--muted);font-size:11px}
+.post-menu-wrap{position:relative;flex:0 0 auto}
+.post-menu-trigger{width:36px;height:36px;border:0;border-radius:50%;background:#f2f5f2;color:var(--green);font-size:25px;line-height:1;cursor:pointer}
+.post-menu-trigger:hover,.post-menu-trigger[aria-expanded="true"]{background:#e5eee9}
+.post-menu{position:absolute;z-index:30;top:42px;left:0;width:205px;padding:6px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.16);display:grid;gap:2px}
+.post-menu[hidden]{display:none}
+.post-menu button{width:100%;border:0;background:transparent;text-align:right;padding:10px 11px;border-radius:8px;font:inherit;font-size:12px;color:var(--text);cursor:pointer}
+.post-menu button:hover{background:#f2f6f3}
+.post-menu button.danger{color:#b42318}
+.saved-listing-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px;margin:8px 0;border:1px solid var(--border);border-radius:12px;background:#fff}
+.saved-listing-row small{display:block;color:var(--muted);font-size:11px}
+.saved-listing-row>div:last-child{display:flex;gap:7px;flex-wrap:wrap}
+.listing-reports-admin{margin-top:18px}
+@media(max-width:600px){.property-post-head{gap:7px;padding:12px}.property-badge{font-size:10px;padding:3px 7px}.saved-listing-row{align-items:flex-start;flex-direction:column}.saved-listing-row>div:last-child{width:100%}.saved-listing-row .btn{flex:1}}
