@@ -201,6 +201,7 @@
         isAdmin = !!data && data.role === "admin" && data.is_active === true;
       }
       renderAccount();
+      if ($("communityAdminTab")) $("communityAdminTab").hidden = !isAdmin;
       if (isAdmin) { await loadPendingListings(); await loadCommunityAdmin(); }
       else {
         if ($("adminNavButton")) $("adminNavButton").hidden = true;
