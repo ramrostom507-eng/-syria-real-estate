@@ -1128,8 +1128,41 @@
         modal.setAttribute("aria-modal","true");
         modal.setAttribute("aria-label","تعليقات المنشور");
         modal.innerHTML='<div class="community-comments-dialog"><header class="community-comments-modal-head"><strong>التعليقات</strong><button type="button" data-community-close-comments aria-label="إغلاق">×</button></header><div class="community-comments-modal-body" id="communityCommentsModalBody"></div><div class="community-comments-modal-compose" id="communityCommentsModalCompose"></div></div>';
-        feed.appendChild(modal);
-        modal.addEventListener("click",ev=>{if(ev.target===modal||ev.target.closest("[data-community-close-comments]")){modal.hidden=true;document.body.classList.remove("comments-modal-open");}});
+        document.body.appendChild(modal);
+        modal.addEventListener("click",ev=>{
+          if(ev.target===modal||ev.target.closest("[data-community-close-comments]")){
+            modal.hidden=true;
+            document.body.classList.remove("comments-modal-open");
+            return;
+          }
+          const replyButton=ev.target.closest("[data-community-reply-toggle]");
+          if(replyButton){
+            const form=modal.querySelector('[data-community-reply="'+replyButton.dataset.communityReply+'"]');
+            if(form){form.hidden=!form.hidden;if(!form.hidden)form.querySelector('input[name="body"]')?.focus();}
+          }
+        });
+        modal.addEventListener("submit",async ev=>{
+          const replyForm=ev.target.closest("form[data-community-reply]");
+          const commentForm=ev.target.closest("form[data-community-comment]");
+          const form=replyForm||commentForm;
+          if(!form)return;
+          ev.preventDefault();
+          if(!currentUser){window.alert("سجّل الدخول بحسابك أولاً للتعليق.");$("login")?.scrollIntoView({behavior:"smooth"});return;}
+          const body=form.elements.body.value.trim(),button=form.querySelector('button[type="submit"]');
+          if(!body)return;
+          if(button)button.disabled=true;
+          try{
+            const args=replyForm
+              ? {p_post_id:replyForm.dataset.postId,p_body:body,p_parent_comment_id:replyForm.dataset.communityReply}
+              : {p_post_id:commentForm.dataset.communityComment,p_body:body};
+            const {error}=await db.rpc("community_add_user_comment",args);
+            if(error)throw error;
+            const postId=replyForm?.dataset.postId||commentForm?.dataset.communityComment;
+            await loadCommunityFeed();
+            if(postId)openCommunityComments(postId);
+          }catch(error){window.alert("تعذر نشر التعليق: "+error.message);}
+          finally{if(button)button.disabled=false;}
+        });
       }
       const comments=post.querySelector('[data-community-comments-for="'+CSS.escape(postId)+'"]');
       const form=post.querySelector('[data-community-comment="'+CSS.escape(postId)+'"]');
@@ -1164,18 +1197,38 @@
       }
       if(!ids.length)return;
       // تُحمّل التفاصيل الثانوية بالتوازي، ولا تؤخر ظهور نص المنشورات.
-      const jobs=[
+      // ابدأ جلب الوسائط فوراً وبشكل مستقل؛ لا تجعل الصور تنتظر استعلامات التعليقات والإعجابات.
+      const mediaTask=(async()=>{
+        const mr=await db.from("community_post_media").select("post_id,media_type,storage_path,alt_text,sort_order").in("post_id",ids).order("sort_order",{ascending:true});
+        if(mr.error)throw mr.error;
+        if(requestId!==communityFeedRequest||!feed.isConnected)return;
+        const mediaRows=mr.data||[],mediaPaths=mediaRows.map(m=>m.storage_path).filter(Boolean);
+        if(!mediaPaths.length)return;
+        const signedMedia=await getSignedMediaMap(db,STORAGE_BUCKET,mediaPaths,604800);
+        if(requestId!==communityFeedRequest||!feed.isConnected)return;
+        const byPost=new Map();
+        mediaRows.forEach(m=>{if(!byPost.has(m.post_id))byPost.set(m.post_id,[]);byPost.get(m.post_id).push(m);});
+        posts.forEach((p,postIndex)=>{
+          const box=feed.querySelector('[data-community-media-for="'+p.id+'"]');
+          if(!box)return;
+          const rows=byPost.get(p.id)||[];
+          box.innerHTML=rows.map((m,index)=>{
+            const url=signedMedia.get(m.storage_path);if(!url)return "";
+            return m.media_type==="image"
+              ? '<img class="community-post-media" loading="'+(postIndex===0&&index<2?'eager':'lazy')+'" fetchpriority="'+(postIndex===0&&index<2?'high':'auto')+'" decoding="async" src="'+escapeHTML(url)+'" alt="'+escapeHTML(m.alt_text||"صورة المنشور")+'">'
+              : '<video class="community-post-media" controls playsinline preload="none" src="'+escapeHTML(url)+'"></video>';
+          }).join("");
+        });
+      })().catch(error=>console.warn("تعذر تحميل وسائط المنشورات:",error));
+      const [cr,rr,myReactionResult]=await Promise.all([
         db.from("community_post_comments").select("id,post_id,parent_comment_id,display_name,body,created_at").in("post_id",ids).order("created_at",{ascending:true}),
         db.from("community_post_reactions").select("post_id,reaction").in("post_id",ids),
-        db.from("community_post_media").select("post_id,media_type,storage_path,alt_text,sort_order").in("post_id",ids).order("sort_order",{ascending:true}),
         currentUser?db.from("community_post_reactions").select("post_id").eq("user_id",currentUser.id).in("post_id",ids):Promise.resolve({data:[]})
-      ];
-      const [cr,rr,mr,myReactionResult]=await Promise.all(jobs);
+      ]);
       if(requestId!==communityFeedRequest||!feed.isConnected)return;
-      const cb=new Map(),rb=new Map(),mb=new Map();
+      const cb=new Map(),rb=new Map();
       (cr.data||[]).forEach(c=>{if(!cb.has(c.post_id))cb.set(c.post_id,[]);cb.get(c.post_id).push(c);});
       (rr.data||[]).forEach(r=>{if(!rb.has(r.post_id))rb.set(r.post_id,[]);rb.get(r.post_id).push(r);});
-      (mr.data||[]).forEach(m=>{if(!mb.has(m.post_id))mb.set(m.post_id,[]);mb.get(m.post_id).push(m);});
       const myReacted=new Set((myReactionResult.data||[]).map(x=>x.post_id));
       posts.forEach(p=>{
         const comments=cb.get(p.id)||[],reactions=rb.get(p.id)||[];
@@ -1192,24 +1245,7 @@
           commentBox.innerHTML=(children.get("root")||[]).map(c=>renderComment(c)).join("");
         }
       });
-      const mediaRows=mr.data||[],mediaPaths=mediaRows.map(m=>m.storage_path).filter(Boolean);
-      if(mediaPaths.length){
-        try{
-          const signedMedia=await getSignedMediaMap(db,STORAGE_BUCKET,mediaPaths,604800);
-          if(requestId!==communityFeedRequest||!feed.isConnected)return;
-          posts.forEach((p,postIndex)=>{
-            const box=feed.querySelector('[data-community-media-for="'+p.id+'"]');
-            if(!box)return;
-            const rows=mb.get(p.id)||[];
-            box.innerHTML=rows.map((m,index)=>{
-              const url=signedMedia.get(m.storage_path);if(!url)return "";
-              return m.media_type==="image"
-                ? '<img class="community-post-media" loading="'+(postIndex===0&&index<2?'eager':'lazy')+'" fetchpriority="'+(postIndex===0&&index<2?'high':'auto')+'" decoding="async" src="'+escapeHTML(url)+'" alt="'+escapeHTML(m.alt_text||"صورة المنشور")+'">'
-                : '<video class="community-post-media" controls playsinline preload="none" src="'+escapeHTML(url)+'"></video>';
-            }).join("");
-          });
-        }catch(error){console.warn("تعذر تحميل وسائط المنشورات:",error);}
-      }
+      // mediaTask يعمل بالتوازي ويحدّث بطاقات المنشورات فور جهوزية الروابط.
     }
     async function loadCommunityAdmin(){
       const box=$("communityAdminPanel");if(!box)return;if(!isAdmin){box.innerHTML="";return;}
@@ -1269,7 +1305,6 @@
           : {p_post_id:commentForm.dataset.communityComment,p_body:body};
         const {error}=await db.rpc("community_add_user_comment",args);if(error)throw error;
         await loadCommunityFeed();
-        if(replyForm||commentForm){const postId=replyForm?.dataset.postId||commentForm?.dataset.communityComment; if(postId){const modal=$("communityCommentsModal"); if(modal) modal.remove(); openCommunityComments(postId);}}
       }catch(e){window.alert("تعذر نشر التعليق: "+e.message);}finally{b.disabled=false;}
     });
     $("communityAdminPanel")?.addEventListener("click",async ev=>{const b=ev.target.closest("[data-community-admin],[data-community-report-done]");if(!b||!isAdmin)return;b.disabled=true;try{if(b.dataset.communityReportDone){const {error}=await db.from("community_post_reports").update({status:"reviewed"}).eq("id",b.dataset.communityReportDone);if(error)throw error;}else{const id=b.dataset.id,act=b.dataset.communityAdmin;if(act==="delete"){if(!window.confirm("حذف المنشور نهائياً؟")){b.disabled=false;return;}const {error}=await db.from("community_posts").delete().eq("id",id);if(error)throw error;}else if(act==="pin"){const {error}=await db.from("community_posts").update({is_pinned:b.dataset.pinned!=="true"}).eq("id",id);if(error)throw error;}else if(act==="hide"){const {error}=await db.from("community_posts").update({status:"hidden"}).eq("id",id);if(error)throw error;}else{const {error}=await db.from("community_posts").update({status:act==="approve"?"approved":"rejected"}).eq("id",id);if(error)throw error;}}await loadCommunityAdmin();await loadCommunityFeed();}catch(e){window.alert("تعذر تنفيذ الإجراء: "+e.message);b.disabled=false;}});
