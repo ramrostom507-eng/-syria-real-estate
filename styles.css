@@ -1631,3 +1631,7 @@ body.comments-modal-open{overflow:hidden}
 @media(max-width:600px){.community-comments-modal{padding:0;align-items:stretch}.community-comments-dialog{width:100%;height:100dvh;max-height:100dvh;border-radius:0}.community-comments-modal-body{padding:12px}.community-comments-modal-compose{padding:10px}.community-comments-modal-compose .community-comment-form{gap:6px}}
 
 .community-post > .community-comments,.community-post > form.community-comment-form{display:none!important}
+
+/* اجعل موجز المجموعة يمتد من حافة الشاشة إلى حافتها */
+main{max-width:none!important;width:100%!important;margin:0!important;padding:0!important}
+.portal-layout,.portal-main-column,.community-section{width:100%!important;max-width:none!important}
