@@ -7,7 +7,7 @@
   <meta name="description" content="سوريا عقارات - منصتك الذكية للبيع والشراء والإيجار والاستثمار العقاري في سوريا.">
   <meta name="theme-color" content="#102b2a">
   <title>سوريا عقارات | المنصة العقارية الذكية</title>
-  <link rel="stylesheet" href="styles.css?v=20261120-post-menu-footer-clean1">
+  <link rel="stylesheet" href="styles.css?v=20261120-home-feed-only1">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css">
   <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js" defer></script>
   <script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js"></script>
@@ -27,20 +27,23 @@
 
     <nav class="main-nav" id="mainNav" aria-label="القائمة الجانبية">
       <div class="side-menu-heading"><strong>القائمة الرئيسية</strong><button type="button" id="closeSideMenu" aria-label="إغلاق القائمة">×</button></div>
-      <a href="#community">👥 المنشورات</a>
-      <a href="#login">🔐 تسجيل الدخول والحساب</a>
-      <a href="#admin-panel" id="adminNavButton" hidden>🛠️ الإدارة</a>
+      <a href="#community" data-group-page="community">👥 المنشورات</a>
+      <a href="#search-section" data-group-page="search-section">⌕ البحث عن عقار</a>
+      <a href="#properties" data-group-page="properties">🏠 أحدث العقارات</a>
+      <a href="#saved-listings" data-group-page="saved-listings">🔖 المحفوظات</a>
+      <a href="#ai-assistant" data-group-page="ai-assistant">✦ مساعد الإعلان الذكي</a>
+      <a href="#add-property" data-group-page="add-property">＋ إضافة إعلان عقاري</a>
+      <a href="#my-listings" data-group-page="my-listings">📋 إعلاناتي</a>
+      <a href="#login" data-group-page="login">🔐 تسجيل الدخول والحساب</a>
+      <a href="#admin-panel" id="adminNavButton" data-group-page="admin-panel" hidden>🛠️ الإدارة</a>
     </nav>
     <button type="button" class="side-menu-backdrop" id="sideMenuBackdrop" aria-label="إغلاق القائمة"></button>
 
-    <div class="header-actions">
-      <a class="btn btn-primary" href="#community">＋ اكتب منشوراً</a>
-    </div>
   </header>
 
   <main>
   <div class="portal-layout">
-    <aside class="portal-sidebar portal-sidebar-right" aria-label="التنقل السريع">
+    <aside class="portal-sidebar portal-sidebar-right" aria-label="التنقل السريع" hidden>
       <section class="portal-side-card"><span class="portal-side-kicker">اكتشف المنصة</span><h3>كل ما يهمك عقارياً</h3><a href="#properties">🏠 أحدث العقارات</a><a href="#searchForm">⌕ ابحث عن عقار</a><a href="#community">👥 المجتمع العقاري</a><a href="#add-property">＋ أضف إعلانك</a><a href="#saved-listings">🔖 المحفوظات</a></section>
       <section class="portal-side-card portal-side-highlight"><span class="portal-side-kicker">شاركنا</span><h3>عقارك يستحق أن يُرى</h3><p>انشر إعلانك مع الصور أو الفيديو، وسيظهر بعد مراجعة الإدارة.</p><a class="portal-side-cta" href="#add-property">انشر عقارك الآن</a></section>
     </aside>
@@ -48,7 +51,7 @@
 
 <section class="community-section" id="community">
   <div class="community-cover" role="img" aria-label="غلاف مجموعة عقارات سوريا"><div class="community-cover-shade"></div><div class="community-cover-title"><span>SYRIA REAL ESTATE</span><strong>عقارات سوريا</strong><small>مجتمع العقارات السوري</small></div></div>
-  <div class="community-profile-head"><div><h1>عقارات سوريا</h1><p>مجموعة عامة · مجتمع عقاري مفتوح</p></div><a class="btn btn-primary community-invite" href="#login">تسجيل الدخول</a></div>
+  <div class="community-profile-head"><div><h1>عقارات سوريا</h1><p>مجموعة عامة · مجتمع عقاري مفتوح</p></div></div>
   <nav class="community-tabs" aria-label="أقسام المجموعة"><button class="active" type="button" data-community-view="posts" aria-selected="true">المنشورات</button><button type="button" data-community-view="publish" aria-selected="false">النشر</button><details class="community-more"><summary>المزيد ☰</summary><div class="community-more-menu"><a href="#saved-listings" data-group-page="saved-listings">المحفوظات</a><a href="#ai-assistant" data-group-page="ai-assistant">مساعد الإعلان الذكي</a><a href="#add-property" data-group-page="add-property">إضافة إعلان عقاري</a><a href="#my-listings" data-group-page="my-listings">إعلاناتي</a><a href="#login">الحساب وتسجيل الدخول</a></div></details></nav>
   <div id="communityPostsPanel" class="community-tab-panel">
   <div class="community-feed-tools"><h3>آخر المنشورات</h3><button id="communityRefreshButton" class="btn btn-outline" type="button">تحديث المنشورات</button></div>
@@ -73,7 +76,7 @@
     <div id="communityAdminPanel" class="community-admin-panel"></div>
   </section>
 </section>
-<section class="search-section" aria-label="البحث عن عقار">
+<section class="search-section" id="search-section" aria-label="البحث عن عقار" hidden>
       <div class="section-heading">
         <span class="eyebrow">بحث</span>
         <h2>ابحث عن عقار</h2>
@@ -143,7 +146,7 @@
       </div>
     </section>
     </div>
-    <aside class="portal-sidebar portal-sidebar-left" aria-label="معلومات المنصة">
+    <aside class="portal-sidebar portal-sidebar-left" aria-label="معلومات المنصة" hidden>
       <section class="portal-side-card portal-follow-card"><span class="portal-side-kicker">مجتمعنا يكبر بكم</span><h3>تابع سوريا عقارات</h3><div class="portal-follower-number"><span id="portalFollowerMirror">—</span><small>متابع للمنصة</small></div><p>كن قريباً من أحدث الفرص والإعلانات العقارية.</p><button type="button" id="portalFollowMirror" class="portal-side-cta">＋ متابعة المنصة</button><small id="portalFollowMirrorMessage" aria-live="polite"></small></section>
       <section class="portal-side-card"><span class="portal-side-kicker">معلومة مهمة</span><h3>منصة للجميع</h3><p>تصفّح المنشورات بحرية، وسجّل الدخول بحسابك للنشر والتفاعل دون إدخال رقم هاتف.</p></section>
     </aside>
@@ -177,7 +180,7 @@
       </div>
     </section>
 
-<section class="add-section" id="login">
+<section class="add-section" id="login" hidden>
       <div class="section-heading">
         <span class="eyebrow">الدخول إلى المنصة</span>
         <h2>الدخول إلى المجموعة</h2>
@@ -254,14 +257,10 @@
       <p>منصة عقارية ذكية لخدمة السوق السوري.</p>
     </div>
     <div class="footer-links">
-      <a href="#properties">الإعلانات</a>
-      <a href="#searchForm">بحث</a>
-      <a href="#add-property">نشر إعلان</a>
-      <a href="#my-listings">إعلاناتي</a>
     </div>
     <p class="copyright">© <span id="currentYear"></span> سوريا عقارات. جميع الحقوق محفوظة.</p>
   </footer>
 
-  <script src="app.js?v=20261120-post-menu-footer-clean2"></script>
+  <script src="app.js?v=20261120-home-feed-only1"></script>
 </body>
 </html>
