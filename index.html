@@ -47,7 +47,7 @@
 <section class="community-section" id="community">
   <div class="community-cover" role="img" aria-label="غلاف مجموعة عقارات سوريا"><div class="community-cover-shade"></div><div class="community-cover-title"><span>SYRIA REAL ESTATE</span><strong>عقارات سوريا</strong><small>مجتمع العقارات السوري</small></div></div>
   <div class="community-profile-head"><div><h1>عقارات سوريا</h1><p>مجموعة عامة · مجتمع عقاري مفتوح</p></div><a class="btn btn-primary community-invite" href="#login">تسجيل الدخول</a></div>
-  <nav class="community-tabs" aria-label="أقسام المجموعة"><a class="active" href="#community">المنشورات</a><a href="#communityPostForm">اكتب منشوراً</a><a href="#communityAdminPanel" id="communityAdminTab" hidden>الإدارة</a></nav>
+  <nav class="community-tabs" aria-label="أقسام المجموعة"><a class="active" href="#community">المنشورات</a><a href="#communityPostForm">اكتب منشوراً</a><a href="#communityAdminPanel" id="communityAdminTab" hidden>الإدارة</a><details class="community-more"><summary>المزيد ☰</summary><div class="community-more-menu"><a href="#saved-listings" data-group-page="saved-listings">المحفوظات</a><a href="#ai-assistant" data-group-page="ai-assistant">مساعد الإعلان الذكي</a><a href="#add-property" data-group-page="add-property">إضافة إعلان عقاري</a><a href="#my-listings" data-group-page="my-listings">إعلاناتي</a><a href="#login">الحساب وتسجيل الدخول</a></div></details></nav>
   <form id="communityPostForm" class="community-composer">
     <textarea id="communityPostBody" rows="4" maxlength="10000" minlength="2" placeholder="بماذا تفكر؟ اكتب منشورك هنا..." required></textarea>
     <label class="community-media-label" for="communityPostFiles">＋ أرفق صوراً أو فيديو (حتى 8 ملفات)</label><input id="communityPostFiles" type="file" accept="image/*,video/*,.jpg,.jpeg,.png,.webp,.gif,.mp4,.m4v,.webm,.mov,.3gp,.3gpp,.avi,.mkv,.mpg,.mpeg,.ogv,.ts" multiple>
@@ -133,12 +133,12 @@
       <section class="portal-side-card"><span class="portal-side-kicker">معلومة مهمة</span><h3>منصة للجميع</h3><p>تصفّح المنشورات بحرية، وسجّل الدخول بحسابك للنشر والتفاعل دون إدخال رقم هاتف.</p></section>
     </aside>
   </div>
-    <section class="section saved-listings-section" id="saved-listings">
+    <section class="section saved-listings-section" id="saved-listings" hidden>
       <div class="section-heading"><span class="eyebrow">قائمتك الخاصة</span><h2>الإعلانات المحفوظة</h2><p>الإعلانات التي تحفظها تظهر هنا على هذا الجهاز.</p></div>
       <div id="savedListings"><p class="empty-state">جارٍ تحميل المحفوظات...</p></div>
     </section>
 
-<section class="ai-section" id="ai-assistant">
+<section class="ai-section" id="ai-assistant" hidden>
       <div class="ai-content">
         <span class="eyebrow">تقنيات الذكاء الاصطناعي</span>
         <h2>تعرّف على مساعدك العقاري الذكي</h2>
@@ -194,7 +194,7 @@
       <div id="communityAdminPanel" class="community-admin-panel"></div>
     </section>
 
-    <section class="add-section" id="add-property">
+    <section class="add-section" id="add-property" hidden>
       <div class="section-heading">
         <span class="eyebrow">أضف إعلانك</span>
         <h2>اكتب منشورك العقاري ببساطة</h2>
@@ -235,7 +235,7 @@
         <p id="formMessage" class="form-message" aria-live="polite"></p>
         <small>إعلانك لا يظهر للعامة إلا بعد مراجعة الإدارة والموافقة عليه.</small>
       </form>
-      <section class="my-listings-section" id="my-listings">
+      <section class="my-listings-section" id="my-listings" hidden>
         <div class="section-heading"><span class="eyebrow">إدارة إعلاناتك</span><h2>إعلاناتي</h2><p>تظهر هنا الإعلانات التي نشرتها من هذا الجهاز، ويمكنك تعديلها أو حذفها دون إنشاء حساب.</p></div>
         <div id="myGuestAds"><p class="empty-state">جارٍ تحميل إعلاناتك...</p></div>
         <div id="guestManagePanel"></div>
