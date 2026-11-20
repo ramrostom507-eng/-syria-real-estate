@@ -1129,40 +1129,62 @@
         modal.setAttribute("aria-label","تعليقات المنشور");
         modal.innerHTML='<div class="community-comments-dialog"><header class="community-comments-modal-head"><strong>التعليقات</strong><button type="button" data-community-close-comments aria-label="إغلاق">×</button></header><div class="community-comments-modal-body" id="communityCommentsModalBody"></div><div class="community-comments-modal-compose" id="communityCommentsModalCompose"></div></div>';
         document.body.appendChild(modal);
-        modal.addEventListener("click",ev=>{
-          if(ev.target===modal||ev.target.closest("[data-community-close-comments]")){
-            modal.hidden=true;
-            document.body.classList.remove("comments-modal-open");
-            return;
-          }
-          const replyButton=ev.target.closest("[data-community-reply-toggle]");
-          if(replyButton){
-            const form=modal.querySelector('[data-community-reply="'+replyButton.dataset.communityReply+'"]');
-            if(form){form.hidden=!form.hidden;if(!form.hidden)form.querySelector('input[name="body"]')?.focus();}
-          }
-        });
-        modal.addEventListener("submit",async ev=>{
-          const replyForm=ev.target.closest("form[data-community-reply]");
-          const commentForm=ev.target.closest("form[data-community-comment]");
-          const form=replyForm||commentForm;
-          if(!form)return;
-          ev.preventDefault();
-          if(!currentUser){window.alert("سجّل الدخول بحسابك أولاً للتعليق.");$("login")?.scrollIntoView({behavior:"smooth"});return;}
-          const body=form.elements.body.value.trim(),button=form.querySelector('button[type="submit"]');
-          if(!body)return;
-          if(button)button.disabled=true;
-          try{
-            const args=replyForm
-              ? {p_post_id:replyForm.dataset.postId,p_body:body,p_parent_comment_id:replyForm.dataset.communityReply}
-              : {p_post_id:commentForm.dataset.communityComment,p_body:body};
-            const {error}=await db.rpc("community_add_user_comment",args);
-            if(error)throw error;
-            const postId=replyForm?.dataset.postId||commentForm?.dataset.communityComment;
-            await loadCommunityFeed();
-            if(postId)openCommunityComments(postId);
-          }catch(error){window.alert("تعذر نشر التعليق: "+error.message);}
-          finally{if(button)button.disabled=false;}
-        });
+        if(!window.__communityModalHandlersInstalled){
+          window.__communityModalHandlersInstalled=true;
+          document.addEventListener("click",ev=>{
+            const target=ev.target instanceof Element?ev.target:ev.target?.parentElement;
+            if(!target)return;
+            const activeModal=document.getElementById("communityCommentsModal");
+            if(!activeModal)return;
+            if(target===activeModal||target.closest("[data-community-close-comments]")){
+              activeModal.hidden=true;
+              document.body.classList.remove("comments-modal-open");
+              return;
+            }
+            const replyButton=target.closest("[data-community-reply-toggle]");
+            if(replyButton&&activeModal.contains(replyButton)){
+              const comment=replyButton.closest(".community-comment");
+              const form=comment?.querySelector(':scope > form[data-community-reply]');
+              if(form){
+                form.hidden=!form.hidden;
+                if(!form.hidden)form.querySelector('input[name="body"]')?.focus();
+              }
+            }
+          });
+          document.addEventListener("submit",async ev=>{
+            const form=ev.target;
+            if(!(form instanceof HTMLFormElement)||!form.closest("#communityCommentsModal"))return;
+            const replyForm=form.matches("form[data-community-reply]")?form:null;
+            const commentForm=form.matches("form[data-community-comment]")?form:null;
+            if(!replyForm&&!commentForm)return;
+            ev.preventDefault();
+            ev.stopImmediatePropagation();
+            if(!currentUser){
+              window.alert("سجّل الدخول بحسابك أولاً للتعليق.");
+              $("login")?.scrollIntoView({behavior:"smooth"});
+              return;
+            }
+            const input=form.querySelector('input[name="body"]');
+            const body=input?.value.trim();
+            const button=form.querySelector('button[type="submit"]');
+            if(!body)return;
+            if(button)button.disabled=true;
+            try{
+              const postId=replyForm?.dataset.postId||commentForm?.dataset.communityComment;
+              const args=replyForm
+                ? {p_post_id:postId,p_body:body,p_parent_comment_id:replyForm.dataset.communityReply}
+                : {p_post_id:postId,p_body:body};
+              const {error}=await db.rpc("community_add_user_comment",args);
+              if(error)throw error;
+              await loadCommunityFeed();
+              if(postId)openCommunityComments(postId);
+            }catch(error){
+              window.alert("تعذر نشر الرد: "+(error?.message||String(error)));
+            }finally{
+              if(button)button.disabled=false;
+            }
+          });
+        }
       }
       const comments=post.querySelector('[data-community-comments-for="'+CSS.escape(postId)+'"]');
       const form=post.querySelector('[data-community-comment="'+CSS.escape(postId)+'"]');
