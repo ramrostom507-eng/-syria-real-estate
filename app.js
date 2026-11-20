@@ -1118,7 +1118,7 @@
       const propertyGridNode=$("propertyGrid")||window.__communityPropertyGrid;
       if(propertyGridNode)window.__communityPropertyGrid=propertyGridNode;
       feed.innerHTML='<p class="empty-state">جارٍ تحميل منشورات المجموعة...</p>';
-      const {data:rawPosts,error}=await db.from("community_posts").select("id,display_name,body,post_type,created_at,is_pinned,is_anonymous").eq("status","approved").order("is_pinned",{ascending:false}).order("created_at",{ascending:false}).limit(60);
+      const {data:rawPosts,error}=await db.from("community_posts").select("id,display_name,body,post_type,created_at,is_pinned,is_anonymous").eq("status","approved").order("is_pinned",{ascending:false}).order("created_at",{ascending:false}).limit(30);
       if(error){feed.textContent="تعذر تحميل المنشورات: "+error.message;return;}
       const posts=rawPosts||[],hasCommunityPosts=posts.length>0;
       const ids=posts.map(p=>p.id);
@@ -1227,7 +1227,12 @@
     });
 
     if ($("currentYear")) $("currentYear").textContent = new Date().getFullYear();
-    $("menuToggle")?.addEventListener("click", () => $("mainNav")?.classList.toggle("open"));
+    const sideMenu=$("mainNav"),menuToggle=$("menuToggle");
+    const closeSideMenu=()=>{sideMenu?.classList.remove("open");menuToggle?.setAttribute("aria-expanded","false");};
+    menuToggle?.addEventListener("click",()=>{const open=!sideMenu?.classList.contains("open");sideMenu?.classList.toggle("open",open);menuToggle?.setAttribute("aria-expanded",String(open));});
+    $("closeSideMenu")?.addEventListener("click",closeSideMenu);
+    $("sideMenuBackdrop")?.addEventListener("click",closeSideMenu);
+    sideMenu?.querySelectorAll("a").forEach(link=>link.addEventListener("click",closeSideMenu));
 
     await refreshUser();
     await loadListings();
