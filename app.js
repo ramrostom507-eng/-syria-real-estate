@@ -33,11 +33,11 @@
     "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
   })[c]);
   const signedMediaCache = new Map();
-  async function getSignedMediaMap(bucket, paths, expiresIn = 604800) {
+  async function getSignedMediaMap(client, bucket, paths, expiresIn = 604800) {
     const unique=[...new Set((paths||[]).filter(Boolean))], result=new Map(), missing=[], now=Date.now();
     unique.forEach(path=>{const cached=signedMediaCache.get(bucket+":"+path);if(cached&&cached.expiresAt>now+60000)result.set(path,cached.url);else missing.push(path);});
     const batches=[];for(let i=0;i<missing.length;i+=100)batches.push(missing.slice(i,i+100));
-    const responses=await Promise.all(batches.map(batch=>db.storage.from(bucket).createSignedUrls(batch,expiresIn)));
+    const responses=await Promise.all(batches.map(batch=>client.storage.from(bucket).createSignedUrls(batch,expiresIn)));
     responses.forEach(response=>{if(response.error)console.warn("تعذر إنشاء روابط بعض الوسائط:",response.error.message);(response.data||[]).forEach(item=>{if(item?.path&&item?.signedUrl){result.set(item.path,item.signedUrl);signedMediaCache.set(bucket+":"+item.path,{url:item.signedUrl,expiresAt:now+Math.max(60000,(expiresIn-300)*1000)});}});});
     return result;
   }
@@ -405,10 +405,10 @@
       const tourResult = listingIds.length ? await db.from("listing_3d_media").select("id,listing_id,media_kind,storage_path,original_name,status").in("listing_id", listingIds).eq("status","approved") : {data:[],error:null};
       if (tourResult.error) console.warn("تعذر تحميل الجولات ثلاثية الأبعاد:", tourResult.error.message);
       const tourRows = tourResult.data || [], tourPaths = tourRows.map(x=>x.storage_path).filter(Boolean);
-      const tourSigned = await getSignedMediaMap("property-3d",tourPaths,3600);
+      const tourSigned = await getSignedMediaMap(db,"property-3d",tourPaths,3600);
       const toursByListing = new Map();
       tourRows.forEach(x=>{const url=tourSigned.get(x.storage_path);if(!url)return;if(!toursByListing.has(x.listing_id))toursByListing.set(x.listing_id,[]);toursByListing.get(x.listing_id).push({...x,url});});
-      const mediaPromise = getSignedMediaMap(STORAGE_BUCKET,mediaPaths,604800).then(map=>map.forEach((url,path)=>signedMap.set(path,url)));
+      const mediaPromise = getSignedMediaMap(db,STORAGE_BUCKET,mediaPaths,604800).then(map=>map.forEach((url,path)=>signedMap.set(path,url)));
       const socialPromise = listingIds.length ? Promise.all([
         db.from("listing_likes").select("listing_id").in("listing_id", listingIds),
         db.from("listing_comments").select("listing_id").in("listing_id", listingIds),
