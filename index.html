@@ -36,7 +36,7 @@
 
     <div class="header-actions">
       <a class="btn btn-primary" href="#add-property">＋ نشر إعلان</a>
-      <a class="btn btn-outline" href="#login">دخول الإدارة</a>
+      <a class="btn btn-outline" href="#login">تسجيل الدخول</a>
       <a class="btn btn-outline" id="adminNavButton" href="#admin-panel" hidden>⚙ الإدارة</a>
     </div>
   </header>
@@ -85,13 +85,12 @@
     <div class="portal-main-column">
 
 <section class="community-section" id="community">
-  <div class="community-heading"><span class="eyebrow">مجتمع سوريا عقارات</span><h2>مجتمعنا العقاري</h2><p>انشر سؤالك أو فرصتك أو تجربتك باسمك المستعار، وشارك الآخرين دون إنشاء حساب.</p></div>
+  <div class="community-heading"><span class="eyebrow">مجتمع سوريا عقارات</span><h2>مجتمعنا العقاري</h2><p>مجموعة عقارية واحدة مثل مجموعات فيسبوك. سجّل الدخول بحسابك وانشر مباشرةً دون إدخال اسم أو رقم هاتف.</p></div>
   <form id="communityPostForm" class="community-composer">
-    <input id="communityDisplayName" type="text" maxlength="60" minlength="2" placeholder="اكتب الاسم الذي سيظهر للناس" required>
     <textarea id="communityPostBody" rows="4" maxlength="10000" minlength="2" placeholder="بماذا تفكر؟ اكتب منشورك هنا..." required></textarea>
     <label class="community-media-label" for="communityPostFiles">＋ أرفق صوراً أو فيديو (حتى 8 ملفات)</label><input id="communityPostFiles" type="file" accept="image/*,video/*,.jpg,.jpeg,.png,.webp,.gif,.mp4,.m4v,.webm,.mov,.3gp,.3gpp,.avi,.mkv,.mpg,.mpeg,.ogv,.ts" multiple>
     <div class="community-composer-actions"><select id="communityPostType" aria-label="نوع المنشور"><option value="general">منشور عام</option><option value="property">عرض عقاري</option><option value="question">سؤال واستفسار</option><option value="offer">فرصة أو طلب</option></select><button class="btn btn-primary" type="submit">نشر للمراجعة</button></div>
-    <p id="communityPostMessage" aria-live="polite"></p><small>المنشور يظهر للجميع بعد موافقة الإدارة. لا يلزم تسجيل حساب.</small>
+    <p id="communityPostMessage" aria-live="polite"></p><small>النشر والتعليق والإعجاب متاح للحسابات المسجّلة فقط. لا نطلب رقم هاتف، والمنشور يظهر بعد موافقة الإدارة.</small>
   </form>
   <div class="community-feed-tools"><h3>آخر المنشورات</h3><button id="communityRefreshButton" class="btn btn-outline" type="button">تحديث المنشورات</button></div>
   <div id="communityFeed" class="community-feed"><p class="empty-state">جارٍ تحميل المنشورات...</p></div>
@@ -168,7 +167,7 @@
     </div>
     <aside class="portal-sidebar portal-sidebar-left" aria-label="معلومات المنصة">
       <section class="portal-side-card portal-follow-card"><span class="portal-side-kicker">مجتمعنا يكبر بكم</span><h3>تابع سوريا عقارات</h3><div class="portal-follower-number"><span id="portalFollowerMirror">—</span><small>متابع للمنصة</small></div><p>كن قريباً من أحدث الفرص والإعلانات العقارية.</p><button type="button" id="portalFollowMirror" class="portal-side-cta">＋ متابعة المنصة</button><small id="portalFollowMirrorMessage" aria-live="polite"></small></section>
-      <section class="portal-side-card"><span class="portal-side-kicker">معلومة مهمة</span><h3>منصة للجميع</h3><p>تصفّح وتفاعل وانشر باسم مستعار، دون الحاجة إلى إنشاء حساب.</p></section>
+      <section class="portal-side-card"><span class="portal-side-kicker">معلومة مهمة</span><h3>منصة للجميع</h3><p>تصفّح المنشورات بحرية، وسجّل الدخول بحسابك للنشر والتفاعل دون إدخال رقم هاتف.</p></section>
     </aside>
   </div>
     <section class="section saved-listings-section" id="saved-listings">
