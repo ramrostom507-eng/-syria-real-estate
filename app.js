@@ -177,6 +177,13 @@
             <button class="btn btn-outline" id="signUpButton" type="button">إنشاء حساب بالبريد</button>
             <button class="btn btn-outline" id="signOutButton" type="button" hidden>تسجيل الخروج</button>
           </div>
+          <div id="communityIdentityEditor" hidden style="margin-top:16px;padding:14px;border:1px solid #d9e4df;border-radius:14px;background:#f7faf8">
+            <label for="communityDisplayName" style="display:block;font-weight:700;margin-bottom:7px">الاسم الذي يظهر للناس في المجتمع</label>
+            <input id="communityDisplayName" type="text" minlength="2" maxlength="40" autocomplete="nickname" placeholder="اكتب اسمك أو اسماً مستعاراً" style="width:100%;padding:12px;border:1px solid #cbd8d1;border-radius:10px">
+            <small style="display:block;margin-top:7px;color:#52645d">أنت تختار الاسم بنفسك. لا يظهر بريدك الإلكتروني ولا نطلب رقم هاتف.</small>
+            <button class="btn btn-primary" id="saveCommunityDisplayName" type="button" style="margin-top:10px">حفظ الاسم الظاهر</button>
+            <p id="communityDisplayNameMessage" aria-live="polite"></p>
+          </div>
           <p id="accountMessage" aria-live="polite"></p>
         </div>`;
     }
@@ -187,11 +194,54 @@
       if ($("googleSignInButton")) $("googleSignInButton").hidden = !!currentUser;
       if ($("facebookSignInButton")) $("facebookSignInButton").hidden = !!currentUser;
       if ($("signOutButton")) $("signOutButton").hidden = !currentUser;
+      if ($("communityIdentityEditor")) $("communityIdentityEditor").hidden = !currentUser;
       if ($("adminNavButton")) $("adminNavButton").hidden = !isAdmin;
       setMessage("accountMessage", currentUser
-        ? "تم تسجيل الدخول بنجاح. يمكنك الآن النشر والتعليق والتفاعل باسم حسابك."
+        ? "تم تسجيل الدخول بنجاح. اختر الاسم الذي تريد أن يظهر به الآخرون في المجتمع."
         : "سجّل الدخول بحسابك للمشاركة في المنشورات.");
     }
+
+    async function loadCommunityIdentity() {
+      const editor = $("communityIdentityEditor");
+      if (!editor) return;
+      if (!currentUser) { editor.hidden = true; return; }
+      editor.hidden = false;
+      const { data, error } = await db.from("profiles")
+        .select("display_name").eq("id", currentUser.id).maybeSingle();
+      if (error) {
+        console.warn("تعذر تحميل الاسم الظاهر:", error.message);
+        setMessage("communityDisplayNameMessage", "تعذر تحميل الاسم المحفوظ حالياً.", true);
+      }
+      const metadata = currentUser.user_metadata || {};
+      const suggested = metadata.full_name || metadata.name || "";
+      const input = $("communityDisplayName");
+      if (input) input.value = data?.display_name || suggested;
+    }
+
+    $("saveCommunityDisplayName")?.addEventListener("click", async () => {
+      if (!currentUser) return;
+      const input = $("communityDisplayName");
+      const button = $("saveCommunityDisplayName");
+      const displayName = (input?.value || "").trim();
+      if (displayName.length < 2 || displayName.length > 40) {
+        setMessage("communityDisplayNameMessage", "اكتب اسماً من حرفين إلى 40 حرفاً.", true);
+        return;
+      }
+      button.disabled = true;
+      setMessage("communityDisplayNameMessage", "جارٍ حفظ الاسم...");
+      try {
+        const { data, error } = await db.rpc("community_set_display_name", { p_display_name: displayName });
+        if (error) throw error;
+        if (input) input.value = data || displayName;
+        setMessage("communityDisplayNameMessage", "تم حفظ الاسم الظاهر. سيظهر في منشوراتك وتعليقاتك السابقة والجديدة.");
+        await loadCommunityFeed();
+        if (isAdmin) await loadCommunityAdmin();
+      } catch (error) {
+        setMessage("communityDisplayNameMessage", "تعذر حفظ الاسم: " + (error.message || "خطأ غير معروف"), true);
+      } finally {
+        button.disabled = false;
+      }
+    });
 
     async function refreshAdminState() {
       isAdmin = false;
@@ -217,6 +267,7 @@
       currentUser = data?.user || null;
       renderAccount();
       await refreshAdminState();
+      await loadCommunityIdentity();
     }
 
     $("signUpButton")?.addEventListener("click", async () => {
@@ -1204,6 +1255,7 @@
     db.auth.onAuthStateChange((_event, session) => {
       currentUser = session?.user || null;
       refreshAdminState().catch(error => console.error("admin refresh:", error));
+      loadCommunityIdentity().catch(error => console.error("display name refresh:", error));
       loadCommunityFeed().catch(error => console.error("community refresh:", error));
     });
     console.info("تم تشغيل سوريا عقارات وربطها بقاعدة البيانات الصحيحة.");
