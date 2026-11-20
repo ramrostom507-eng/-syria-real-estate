@@ -1584,3 +1584,16 @@ input,select,textarea { border-radius:10px; }
 .portal-layout{display:block!important;max-width:100%!important}
 .portal-main-column{width:100%!important;max-width:100%!important}
 #search-section[hidden],#properties[hidden],#login[hidden],#admin-panel[hidden],#saved-listings[hidden],#ai-assistant[hidden],#add-property[hidden]{display:none!important}
+
+
+/* Full-width social feed */
+.portal-layout{display:block!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
+.portal-main-column{width:100%!important;max-width:none!important;min-width:0!important}
+.portal-main-column>.community-section,.community-section{display:block!important;width:100%!important;max-width:none!important;margin:0!important;padding:0 0 24px!important;border-radius:0!important}
+.community-feed{width:100%!important;max-width:none!important;padding:0!important;gap:0!important}
+.community-feed-tools{width:100%!important;margin:0!important;border-radius:0!important}
+.community-post{width:100%!important;max-width:none!important;margin:0!important;border-radius:0!important;border-inline:0!important;box-shadow:0 1px 2px #0001!important}
+.community-post-media-grid{display:grid;grid-template-columns:minmax(0,1fr);width:100%;gap:2px;margin:0}
+.community-post-media{display:block;width:100%;max-width:100%;max-height:min(78vh,720px);object-fit:contain;background:#111}
+.community-post-media.media-load-error{display:none}
+@media(max-width:650px){.community-section{padding-bottom:18px!important}.community-post{border-radius:0!important}.community-post-media{max-height:72vh}}
