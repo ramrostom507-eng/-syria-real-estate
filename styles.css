@@ -1549,3 +1549,21 @@ input,select,textarea { border-radius:10px; }
 .community-tab-panel[hidden]{display:none!important}
 .community-post-media-grid video{background:#111}
 @media(max-width:600px){.community-tabs button{padding:13px 12px;font-size:13px}}
+
+
+/* قائمة جانبية موحدة لتسجيل الدخول والإدارة */
+.site-header{display:flex;align-items:center;gap:12px}
+.menu-toggle{display:inline-flex!important;align-items:center;gap:7px;border:1px solid #dfe7e2;background:#f7faf8;border-radius:11px;padding:9px 12px;font-size:15px;color:#214c3d;order:3}
+.menu-toggle span{font-size:12px;font-weight:800}
+.site-header .main-nav{position:fixed;z-index:1002;top:0;right:0;bottom:0;width:min(310px,86vw);height:100dvh;padding:18px 14px;background:#fff;border-left:1px solid #e3e9e5;box-shadow:-12px 0 35px #102b2a24;display:flex;flex-direction:column;align-items:stretch;gap:7px;transform:translateX(110%);visibility:hidden;transition:transform .22s ease,visibility .22s ease;overflow-y:auto}
+.site-header .main-nav.open{transform:translateX(0);visibility:visible}
+.site-header .main-nav a{display:flex;align-items:center;min-height:48px;padding:12px 14px;border-radius:10px;background:#f7f9f8;color:#244b3d;font-size:14px}
+.side-menu-heading{display:flex;align-items:center;justify-content:space-between;padding:8px 7px 15px;margin-bottom:8px;border-bottom:1px solid #e8ede9;color:#1b4939}
+.side-menu-heading strong{font-size:17px}
+.side-menu-heading button{border:0;background:#eef2ef;border-radius:9px;width:34px;height:34px;font-size:23px;color:#244b3d}
+.side-menu-backdrop{position:fixed;inset:0;z-index:1001;border:0;background:#0b1d1880;opacity:0;visibility:hidden;transition:opacity .2s ease}
+.site-header:has(.main-nav.open) .side-menu-backdrop{opacity:1;visibility:visible}
+.site-header .header-actions{margin-inline-start:auto}
+.community-tabs #communityAdminTab{display:none!important}
+@media(max-width:760px){.site-header .menu-toggle{order:3}.site-header .header-actions{margin-inline-start:auto}.site-header .header-actions .btn-primary{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.site-header .main-nav,.side-menu-backdrop{transition:none}}
