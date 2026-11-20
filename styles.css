@@ -1657,3 +1657,6 @@ main{max-width:none!important;width:100%!important;margin:0!important;padding:0!
 
 /* بطاقة مؤسس مستقلة لمشروع عقارات سوريا */
 .founder-cards{grid-template-columns:minmax(0,480px);justify-content:center}
+
+/* Single project founder card */
+.site-footer .founder-cards-single{grid-template-columns:minmax(0,430px);justify-content:center;width:min(430px,92%);margin:0 auto 18px}
