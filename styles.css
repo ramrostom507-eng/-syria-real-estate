@@ -1654,3 +1654,6 @@ main{max-width:none!important;width:100%!important;margin:0!important;padding:0!
 .founder-card-visit{margin-top:9px;padding:3px 13px;border:1px solid rgba(201,164,92,.65);border-radius:20px;color:#f1dba9;font-size:11px;font-weight:800}
 .site-footer .copyright{margin:8px auto 0;text-align:center}
 @media(max-width:650px){.founder-cards{grid-template-columns:1fr;width:min(430px,92%);gap:13px}.founder-card{min-height:205px;padding:22px 15px}.founder-card-ar{font-size:25px}}
+
+/* بطاقة مؤسس مستقلة لمشروع عقارات سوريا */
+.founder-cards{grid-template-columns:minmax(0,480px);justify-content:center}
