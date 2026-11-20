@@ -176,15 +176,7 @@
             <button class="btn btn-primary" id="signInButton" type="button">دخول بالبريد</button>
             <button class="btn btn-outline" id="signUpButton" type="button">إنشاء حساب بالبريد</button>
             <button class="btn btn-outline" id="signOutButton" type="button" hidden>تسجيل الخروج</button>
-          </div>
-          <div id="communityIdentityEditor" hidden style="margin-top:16px;padding:14px;border:1px solid #d9e4df;border-radius:14px;background:#f7faf8">
-            <label for="communityDisplayName" style="display:block;font-weight:700;margin-bottom:7px">الاسم الذي يظهر للناس في المجتمع</label>
-            <input id="communityDisplayName" type="text" minlength="2" maxlength="40" autocomplete="nickname" placeholder="اكتب اسمك أو اسماً مستعاراً" style="width:100%;padding:12px;border:1px solid #cbd8d1;border-radius:10px">
-            <small style="display:block;margin-top:7px;color:#52645d">أنت تختار الاسم بنفسك. لا يظهر بريدك الإلكتروني ولا نطلب رقم هاتف.</small>
-            <button class="btn btn-primary" id="saveCommunityDisplayName" type="button" style="margin-top:10px">حفظ الاسم الظاهر</button>
-            <p id="communityDisplayNameMessage" aria-live="polite"></p>
-          </div>
-          <p id="accountMessage" aria-live="polite"></p>
+          </div><p id="accountMessage" aria-live="polite"></p>
         </div>`;
     }
 
@@ -193,55 +185,12 @@
       if ($("signUpButton")) $("signUpButton").hidden = !!currentUser;
       if ($("googleSignInButton")) $("googleSignInButton").hidden = !!currentUser;
       if ($("facebookSignInButton")) $("facebookSignInButton").hidden = !!currentUser;
-      if ($("signOutButton")) $("signOutButton").hidden = !currentUser;
-      if ($("communityIdentityEditor")) $("communityIdentityEditor").hidden = !currentUser;
-      if ($("adminNavButton")) $("adminNavButton").hidden = !isAdmin;
+      if ($("signOutButton")) $("signOutButton").hidden = !currentUser;if ($("adminNavButton")) $("adminNavButton").hidden = !isAdmin;
+      if ($("admin-panel")) $("admin-panel").hidden = !isAdmin;
       setMessage("accountMessage", currentUser
-        ? "تم تسجيل الدخول بنجاح. اختر الاسم الذي تريد أن يظهر به الآخرون في المجتمع."
-        : "سجّل الدخول بحسابك للمشاركة في المنشورات.");
+        ? "أنت مسجّل الدخول. انشر باسم حسابك أو اختر النشر مجهول الهوية لكل منشور."
+        : "تصفّح بحرية، وسجّل الدخول بحسابك للنشر والتعليق والإعجاب.");
     }
-
-    async function loadCommunityIdentity() {
-      const editor = $("communityIdentityEditor");
-      if (!editor) return;
-      if (!currentUser) { editor.hidden = true; return; }
-      editor.hidden = false;
-      const { data, error } = await db.from("profiles")
-        .select("display_name").eq("id", currentUser.id).maybeSingle();
-      if (error) {
-        console.warn("تعذر تحميل الاسم الظاهر:", error.message);
-        setMessage("communityDisplayNameMessage", "تعذر تحميل الاسم المحفوظ حالياً.", true);
-      }
-      const metadata = currentUser.user_metadata || {};
-      const suggested = metadata.full_name || metadata.name || "";
-      const input = $("communityDisplayName");
-      if (input) input.value = data?.display_name || suggested;
-    }
-
-    $("saveCommunityDisplayName")?.addEventListener("click", async () => {
-      if (!currentUser) return;
-      const input = $("communityDisplayName");
-      const button = $("saveCommunityDisplayName");
-      const displayName = (input?.value || "").trim();
-      if (displayName.length < 2 || displayName.length > 40) {
-        setMessage("communityDisplayNameMessage", "اكتب اسماً من حرفين إلى 40 حرفاً.", true);
-        return;
-      }
-      button.disabled = true;
-      setMessage("communityDisplayNameMessage", "جارٍ حفظ الاسم...");
-      try {
-        const { data, error } = await db.rpc("community_set_display_name", { p_display_name: displayName });
-        if (error) throw error;
-        if (input) input.value = data || displayName;
-        setMessage("communityDisplayNameMessage", "تم حفظ الاسم الظاهر. سيظهر في منشوراتك وتعليقاتك السابقة والجديدة.");
-        await loadCommunityFeed();
-        if (isAdmin) await loadCommunityAdmin();
-      } catch (error) {
-        setMessage("communityDisplayNameMessage", "تعذر حفظ الاسم: " + (error.message || "خطأ غير معروف"), true);
-      } finally {
-        button.disabled = false;
-      }
-    });
 
     async function refreshAdminState() {
       isAdmin = false;
@@ -255,6 +204,7 @@
       if (isAdmin) { await loadPendingListings(); await loadCommunityAdmin(); }
       else {
         if ($("adminNavButton")) $("adminNavButton").hidden = true;
+        if ($("admin-panel")) $("admin-panel").hidden = true;
         if ($("adminMessage")) $("adminMessage").textContent = currentUser
           ? "هذا الحساب لا يملك صلاحية الإدارة."
           : "سجّل الدخول بحساب المدير لعرض طلبات النشر.";
@@ -267,8 +217,7 @@
       currentUser = data?.user || null;
       renderAccount();
       await refreshAdminState();
-      await loadCommunityIdentity();
-    }
+}
 
     $("signUpButton")?.addEventListener("click", async () => {
       const email = $("accountEmail")?.value.trim();
@@ -1188,7 +1137,7 @@
       box.innerHTML='<section class="community-admin-card"><h3>مراجعة منشورات المجتمع ('+ps.length+')</h3>'+(ps.length?pendingCards.join(""):'<p>لا توجد منشورات بانتظار المراجعة.</p>')+'<h3>إدارة المنشورات المنشورة ('+approved.length+')</h3>'+(approved.length?approved.map(p=>'<article class="community-admin-row"><strong>'+escapeHTML(p.display_name)+' · '+communityTypeLabel(p.post_type)+(p.is_pinned?' · مثبت':'')+'</strong><p>'+escapeHTML(p.body).replace(/\\n/g,"<br>")+'</p><div><button class="btn btn-outline" data-community-admin="pin" data-pinned="'+p.is_pinned+'" data-id="'+p.id+'">'+(p.is_pinned?'إلغاء التثبيت':'تثبيت المنشور')+'</button><button class="btn btn-outline" data-community-admin="hide" data-id="'+p.id+'">إخفاء المنشور</button><button class="btn btn-outline" data-community-admin="delete" data-id="'+p.id+'">حذف نهائي</button></div></article>').join(""):'<p>لا توجد منشورات منشورة بعد.</p>')+'<h3>بلاغات المجتمع ('+rs.length+')</h3>'+(rs.length?rs.map(r=>'<article class="community-admin-row"><p>منشور: '+r.post_id+' · '+escapeHTML(r.reason)+'</p><button class="btn btn-outline" data-community-report-done="'+r.id+'">تمت المراجعة</button></article>').join(""):'<p>لا توجد بلاغات مفتوحة.</p>')+'</section>';
     }
     async function uploadCommunityPostFiles(postId,userId,files){if(files.length>8)throw new Error("يمكن إرفاق 8 ملفات كحد أقصى.");for(let i=0;i<files.length;i++){const original=files[i],detected=detectMediaFile(original),file=detected.isImage?await prepareImageForUpload(detected.file):detected.file;if(file.size>MAX_FILE_SIZE)throw new Error("حجم الملف "+file.name+" يتجاوز 50 ميغابايت.");const ext=(file.name.split(".").pop()||"bin").toLowerCase().replace(/[^a-z0-9]/g,"")||"bin";const path="community/"+postId+"/"+userId+"/"+crypto.randomUUID()+"."+ext;const up=await db.storage.from(STORAGE_BUCKET).upload(path,file,{cacheControl:"31536000",upsert:false,contentType:detected.mime});if(up.error)throw new Error("تعذر رفع "+file.name+": "+up.error.message);const linked=await db.rpc("community_user_add_media",{p_post_id:postId,p_storage_path:path,p_media_type:detected.isImage?"image":"video",p_alt_text:original.name,p_sort_order:i});if(linked.error)throw new Error("تم رفع الملف لكن تعذر ربطه بالمنشور: "+linked.error.message);}}
-    $("communityPostForm")?.addEventListener("submit",async ev=>{ev.preventDefault();const body=$("communityPostBody").value.trim(),type=$("communityPostType").value,files=Array.from($("communityPostFiles")?.files||[]),b=ev.submitter;if(!currentUser){setMessage("communityPostMessage","سجّل الدخول بحسابك أولاً حتى تتمكن من النشر.",true);$("login")?.scrollIntoView({behavior:"smooth"});return;}if(!body)return;if(files.length>8){setMessage("communityPostMessage","يمكن إرفاق 8 ملفات كحد أقصى.",true);return;}if(b)b.disabled=true;setMessage("communityPostMessage","جارٍ إرسال منشورك للمراجعة...");try{const {data,error}=await db.rpc("community_create_user_post",{p_body:body,p_post_type:type});if(error)throw error;if(files.length){setMessage("communityPostMessage","تم حفظ المنشور. جارٍ رفع الصور والفيديو...");await uploadCommunityPostFiles(data,currentUser.id,files);} $("communityPostBody").value="";$("communityPostFiles").value="";setMessage("communityPostMessage","وصل منشورك"+(files.length?" مع الوسائط":"")+" بنجاح! سيظهر للجميع بعد موافقة الإدارة.");}catch(e){setMessage("communityPostMessage","تعذر إكمال النشر: "+e.message+"؛ قد يكون نص المنشور محفوظاً بانتظار المراجعة.",true);}finally{if(b)b.disabled=false;}});
+    $("communityPostForm")?.addEventListener("submit",async ev=>{ev.preventDefault();const body=$("communityPostBody").value.trim(),type=$("communityPostType").value,isAnonymous=!!$("communityAnonymous")?.checked,files=Array.from($("communityPostFiles")?.files||[]),b=ev.submitter;if(!currentUser){setMessage("communityPostMessage","سجّل الدخول بحسابك أولاً حتى تتمكن من النشر.",true);$("login")?.scrollIntoView({behavior:"smooth"});return;}if(!body)return;if(files.length>8){setMessage("communityPostMessage","يمكن إرفاق 8 ملفات كحد أقصى.",true);return;}if(b)b.disabled=true;setMessage("communityPostMessage","جارٍ إرسال منشورك للمراجعة...");try{const {data,error}=await db.rpc("community_create_user_post",{p_body:body,p_post_type:type,p_is_anonymous:isAnonymous});if(error)throw error;if(files.length){setMessage("communityPostMessage","تم حفظ المنشور. جارٍ رفع الصور والفيديو...");await uploadCommunityPostFiles(data,currentUser.id,files);} $("communityPostBody").value="";$("communityPostFiles").value="";setMessage("communityPostMessage","وصل منشورك"+(files.length?" مع الوسائط":"")+" بنجاح! سيظهر للجميع بعد موافقة الإدارة.");}catch(e){setMessage("communityPostMessage","تعذر إكمال النشر: "+e.message+"؛ قد يكون نص المنشور محفوظاً بانتظار المراجعة.",true);}finally{if(b)b.disabled=false;}});
     $("communityRefreshButton")?.addEventListener("click",loadCommunityFeed);
     // مزامنة بطاقة المتابعة الجانبية مع زر المتابعة الأصلي دون تكرار العدّاد.
     const syncPortalFollow=()=>{const count=$("platformFollowerCount")?.textContent||"—";const target=$("portalFollowerMirror");if(target)target.textContent=count.replace(/[^0-9٠-٩٬,]/g,"")||"—";};
@@ -1255,8 +1204,7 @@
     db.auth.onAuthStateChange((_event, session) => {
       currentUser = session?.user || null;
       refreshAdminState().catch(error => console.error("admin refresh:", error));
-      loadCommunityIdentity().catch(error => console.error("display name refresh:", error));
-      loadCommunityFeed().catch(error => console.error("community refresh:", error));
+loadCommunityFeed().catch(error => console.error("community refresh:", error));
     });
     console.info("تم تشغيل سوريا عقارات وربطها بقاعدة البيانات الصحيحة.");
   }
