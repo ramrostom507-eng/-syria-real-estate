@@ -1567,3 +1567,13 @@ input,select,textarea { border-radius:10px; }
 .community-tabs #communityAdminTab{display:none!important}
 @media(max-width:760px){.site-header .menu-toggle{order:3}.site-header .header-actions{margin-inline-start:auto}.site-header .header-actions .btn-primary{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.site-header .main-nav,.side-menu-backdrop{transition:none}}
+
+
+/* إصلاح قائمة «المزيد»: كانت تُقص بسبب التمرير الأفقي لشريط الأقسام */
+.community-tabs{overflow:visible!important;position:relative;z-index:40;flex-wrap:wrap}
+.community-more{position:relative;z-index:41;overflow:visible}
+.community-more>summary{display:flex;align-items:center;justify-content:center;min-height:46px;touch-action:manipulation;user-select:none;-webkit-tap-highlight-color:transparent}
+.community-more:not([open])>.community-more-menu{display:none!important}
+.community-more[open]>.community-more-menu{display:grid!important;position:absolute;top:calc(100% + 5px);right:0;left:auto;z-index:100;min-width:min(245px,82vw);max-width:calc(100vw - 24px);max-height:65vh;overflow-y:auto;background:#fff;box-shadow:0 12px 32px #0003;border:1px solid #dfe3e8;border-radius:12px;padding:7px}
+.community-more-menu a{display:flex;align-items:center;min-height:44px;padding:11px 13px;white-space:normal}
+@media(max-width:650px){.community-tabs{flex-wrap:wrap;gap:2px}.community-more[open]>.community-more-menu{right:0;left:auto}}
