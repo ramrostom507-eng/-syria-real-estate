@@ -7,7 +7,7 @@
   <meta name="description" content="سوريا عقارات - منصتك الذكية للبيع والشراء والإيجار والاستثمار العقاري في سوريا.">
   <meta name="theme-color" content="#102b2a">
   <title>سوريا عقارات | المنصة العقارية الذكية</title>
-  <link rel="stylesheet" href="styles.css?v=20261120-more-menu-fix1">
+  <link rel="stylesheet" href="styles.css?v=20261120-post-menu-footer-clean1">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css">
   <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js" defer></script>
   <script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js"></script>
@@ -49,7 +49,7 @@
 <section class="community-section" id="community">
   <div class="community-cover" role="img" aria-label="غلاف مجموعة عقارات سوريا"><div class="community-cover-shade"></div><div class="community-cover-title"><span>SYRIA REAL ESTATE</span><strong>عقارات سوريا</strong><small>مجتمع العقارات السوري</small></div></div>
   <div class="community-profile-head"><div><h1>عقارات سوريا</h1><p>مجموعة عامة · مجتمع عقاري مفتوح</p></div><a class="btn btn-primary community-invite" href="#login">تسجيل الدخول</a></div>
-  <nav class="community-tabs" aria-label="أقسام المجموعة"><button class="active" type="button" data-community-view="posts" aria-selected="true">المنشورات</button><button type="button" data-community-view="publish" aria-selected="false">النشر</button><a href="#communityAdminPanel" id="communityAdminTab" hidden>الإدارة</a><details class="community-more"><summary>المزيد ☰</summary><div class="community-more-menu"><a href="#saved-listings" data-group-page="saved-listings">المحفوظات</a><a href="#ai-assistant" data-group-page="ai-assistant">مساعد الإعلان الذكي</a><a href="#add-property" data-group-page="add-property">إضافة إعلان عقاري</a><a href="#my-listings" data-group-page="my-listings">إعلاناتي</a><a href="#login">الحساب وتسجيل الدخول</a></div></details></nav>
+  <nav class="community-tabs" aria-label="أقسام المجموعة"><button class="active" type="button" data-community-view="posts" aria-selected="true">المنشورات</button><button type="button" data-community-view="publish" aria-selected="false">النشر</button><details class="community-more"><summary>المزيد ☰</summary><div class="community-more-menu"><a href="#saved-listings" data-group-page="saved-listings">المحفوظات</a><a href="#ai-assistant" data-group-page="ai-assistant">مساعد الإعلان الذكي</a><a href="#add-property" data-group-page="add-property">إضافة إعلان عقاري</a><a href="#my-listings" data-group-page="my-listings">إعلاناتي</a><a href="#login">الحساب وتسجيل الدخول</a></div></details></nav>
   <div id="communityPostsPanel" class="community-tab-panel">
   <div class="community-feed-tools"><h3>آخر المنشورات</h3><button id="communityRefreshButton" class="btn btn-outline" type="button">تحديث المنشورات</button></div>
   <div id="communityFeed" class="community-feed"><p class="empty-state">جارٍ تحميل المنشورات...</p></div>
@@ -63,6 +63,15 @@
     <p id="communityPostMessage" aria-live="polite"></p><small>كل منشور جديد يمر بمراجعة سريعة قبل ظهوره للجميع. لا نطلب رقم هاتف.</small>
   </form>
   </div>
+  <section class="section" id="admin-panel" hidden>
+    <div class="section-heading">
+      <span class="eyebrow">لوحة التحكم</span>
+      <h2>إدارة عقارات سوريا</h2>
+      <p>إدارة المنشورات والبلاغات تظهر هنا بعد التحقق من صلاحية المدير.</p>
+    </div>
+    <div id="adminMessage" class="notice" aria-live="polite">يلزم تسجيل الدخول والتحقق من صلاحية المدير لعرض الطلبات.</div>
+    <div id="communityAdminPanel" class="community-admin-panel"></div>
+  </section>
 </section>
 <section class="search-section" aria-label="البحث عن عقار">
       <div class="section-heading">
@@ -189,17 +198,6 @@
       </div>
     </section>
 
-    <section class="section" id="admin-panel">
-      <div class="section-heading">
-        <span class="eyebrow">لوحة التحكم</span>
-        <h2>إدارة عقارات سوريا</h2>
-        <p>هذه بوابة الإدارة. سجّل الدخول بالحساب الذي تم منحه صلاحية المدير.</p>
-        <a class="btn btn-primary" href="#login">تسجيل الدخول للإدارة</a>
-      </div>
-      <div id="adminMessage" class="notice" aria-live="polite">يلزم تسجيل الدخول والتحقق من صلاحية المدير لعرض الطلبات.</div>
-      <div id="communityAdminPanel" class="community-admin-panel"></div>
-    </section>
-
     <section class="add-section" id="add-property" hidden>
       <div class="section-heading">
         <span class="eyebrow">أضف إعلانك</span>
@@ -260,11 +258,10 @@
       <a href="#searchForm">بحث</a>
       <a href="#add-property">نشر إعلان</a>
       <a href="#my-listings">إعلاناتي</a>
-      <a href="#login">تسجيل الدخول</a>
     </div>
     <p class="copyright">© <span id="currentYear"></span> سوريا عقارات. جميع الحقوق محفوظة.</p>
   </footer>
 
-  <script src="app.js?v=20261120-side-menu-speed1"></script>
+  <script src="app.js?v=20261120-post-menu-footer-clean1"></script>
 </body>
 </html>
