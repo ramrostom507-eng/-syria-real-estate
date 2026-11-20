@@ -1577,3 +1577,10 @@ input,select,textarea { border-radius:10px; }
 .community-more[open]>.community-more-menu{display:grid!important;position:absolute;top:calc(100% + 5px);right:0;left:auto;z-index:100;min-width:min(245px,82vw);max-width:calc(100vw - 24px);max-height:65vh;overflow-y:auto;background:#fff;box-shadow:0 12px 32px #0003;border:1px solid #dfe3e8;border-radius:12px;padding:7px}
 .community-more-menu a{display:flex;align-items:center;min-height:44px;padding:11px 13px;white-space:normal}
 @media(max-width:650px){.community-tabs{flex-wrap:wrap;gap:2px}.community-more[open]>.community-more-menu{right:0;left:auto}}
+
+
+/* Homepage is the community feed; all other destinations open from the side menu. */
+.portal-sidebar[hidden]{display:none!important}
+.portal-layout{display:block!important;max-width:100%!important}
+.portal-main-column{width:100%!important;max-width:100%!important}
+#search-section[hidden],#properties[hidden],#login[hidden],#admin-panel[hidden],#saved-listings[hidden],#ai-assistant[hidden],#add-property[hidden]{display:none!important}
