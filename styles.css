@@ -1597,3 +1597,15 @@ input,select,textarea { border-radius:10px; }
 .community-post-media{display:block;width:100%;max-width:100%;max-height:min(78vh,720px);object-fit:contain;background:#111}
 .community-post-media.media-load-error{display:none}
 @media(max-width:650px){.community-section{padding-bottom:18px!important}.community-post{border-radius:0!important}.community-post-media{max-height:72vh}}
+
+
+/* Threaded comment replies */
+.community-comment{position:relative;margin:10px 12px;padding:10px 13px;background:#f0f2f5;border-radius:12px;min-width:0}
+.community-comment-reply{margin-inline-start:calc(18px + (var(--reply-depth,1) * 12px));border-inline-start:3px solid #d4dce5;border-radius:10px;background:#f7f8fa}
+.community-comment p{overflow-wrap:anywhere;margin:4px 0 7px}
+.community-reply-button{border:0;background:transparent;color:#1877f2;font:inherit;font-size:13px;font-weight:800;padding:4px 2px;cursor:pointer}
+.community-reply-form{display:flex;gap:7px;margin-top:8px;padding:0;background:transparent}
+.community-reply-form[hidden]{display:none!important}
+.community-reply-form input{flex:1;min-width:0;max-width:none!important;border:1px solid #dfe3e8;border-radius:18px;padding:9px 12px}
+.community-reply-form button{white-space:nowrap;padding:7px 12px}
+@media(max-width:600px){.community-comment-reply{margin-inline-start:12px}.community-reply-form{flex-wrap:wrap}.community-reply-form input{width:100%}}
