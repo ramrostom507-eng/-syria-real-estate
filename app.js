@@ -161,8 +161,8 @@
     if (loginSection) {
       loginSection.innerHTML = `
         <div>
-          <span class="eyebrow">دخول الإدارة</span>
-          <h2>لوحة إدارة سوريا عقارات</h2>
+          <span class="eyebrow">حسابك في المنصة</span>
+          <h2>تسجيل الدخول إلى عقارات سوريا</h2>
           <p>سجّل الدخول بحسابك للمشاركة في مجتمع عقارات سوريا، أو للدخول إلى لوحة الإدارة إذا كان حسابك مخوّلاً.</p>
         </div>
         <div style="max-width:430px;width:100%">
@@ -184,6 +184,8 @@
     function renderAccount() {
       if ($("signInButton")) $("signInButton").hidden = !!currentUser;
       if ($("signUpButton")) $("signUpButton").hidden = !!currentUser;
+      if ($("googleSignInButton")) $("googleSignInButton").hidden = !!currentUser;
+      if ($("facebookSignInButton")) $("facebookSignInButton").hidden = !!currentUser;
       if ($("signOutButton")) $("signOutButton").hidden = !currentUser;
       if ($("adminNavButton")) $("adminNavButton").hidden = !isAdmin;
       setMessage("accountMessage", currentUser
