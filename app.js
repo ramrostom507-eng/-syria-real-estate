@@ -1113,42 +1113,72 @@
     const COMMUNITY_TOKEN_KEY="syriaRealEstateCommunityGuestV1", COMMUNITY_NAME_KEY="syriaRealEstateCommunityNameV1";
     function communityToken(){let t=localStorage.getItem(COMMUNITY_TOKEN_KEY);if(!t){t=crypto.randomUUID();localStorage.setItem(COMMUNITY_TOKEN_KEY,t);}return t;}
     const communityTypeLabel=t=>({general:"منشور عام",property:"عرض عقاري",question:"سؤال واستفسار",offer:"فرصة أو طلب"})[t]||"منشور";
+    let communityFeedRequest=0;
     async function loadCommunityFeed(){
       const feed=$("communityFeed");if(!feed)return;
+      const requestId=++communityFeedRequest;
       const propertyGridNode=$("propertyGrid")||window.__communityPropertyGrid;
       if(propertyGridNode)window.__communityPropertyGrid=propertyGridNode;
-      feed.innerHTML='<p class="empty-state">جارٍ تحميل منشورات المجموعة...</p>';
-      const {data:rawPosts,error}=await db.from("community_posts").select("id,display_name,body,post_type,created_at,is_pinned,is_anonymous").eq("status","approved").order("is_pinned",{ascending:false}).order("created_at",{ascending:false}).limit(30);
+      feed.innerHTML='<p class="empty-state">جارٍ تحميل المنشورات...</p>';
+      const {data:postsData,error}=await db.from("community_posts").select("id,display_name,body,post_type,created_at,is_pinned,is_anonymous").eq("status","approved").order("is_pinned",{ascending:false}).order("created_at",{ascending:false}).limit(30);
+      if(requestId!==communityFeedRequest)return;
       if(error){feed.textContent="تعذر تحميل المنشورات: "+error.message;return;}
-      const posts=rawPosts||[],hasCommunityPosts=posts.length>0;
-      const ids=posts.map(p=>p.id);
-      const [cr,rr,mr]=ids.length?await Promise.all([db.from("community_post_comments").select("id,post_id,display_name,body,created_at").in("post_id",ids).order("created_at",{ascending:true}),db.from("community_post_reactions").select("post_id,reaction").in("post_id",ids),db.from("community_post_media").select("post_id,media_type,storage_path,alt_text,sort_order").in("post_id",ids).order("sort_order",{ascending:true})]):[{data:[]},{data:[]},{data:[]}];
-      const myReactionResult=currentUser?await db.from("community_post_reactions").select("post_id").eq("user_id",currentUser.id).in("post_id",ids):{data:[]};const myReacted=new Set((myReactionResult.data||[]).map(x=>x.post_id));const cb=new Map(),rb=new Map(),mb=new Map();(cr.data||[]).forEach(c=>{if(!cb.has(c.post_id))cb.set(c.post_id,[]);cb.get(c.post_id).push(c);});(rr.data||[]).forEach(r=>{if(!rb.has(r.post_id))rb.set(r.post_id,[]);rb.get(r.post_id).push(r);});(mr.data||[]).forEach(m=>{if(!mb.has(m.post_id))mb.set(m.post_id,[]);mb.get(m.post_id).push(m);});
-      const mediaPaths=(mr.data||[]).map(m=>m.storage_path).filter(Boolean);
-      // نعرض نصوص المنشورات فوراً، ثم نربط روابط الوسائط الموقعة دون تعطيل ظهور الصفحة.
-      feed.innerHTML=posts.map((p,postIndex)=>{const cs=cb.get(p.id)||[],rs=rb.get(p.id)||[],mine=!!currentUser&&myReacted.has(p.id);
-        const mediaHTML=(mb.get(p.id)||[]).map((m,index)=>m.media_type==="image"
-          ? '<img class="community-post-media" data-community-media-path="'+escapeHTML(m.storage_path)+'" loading="'+(postIndex===0&&index<2?'eager':'lazy')+'" fetchpriority="'+(postIndex===0&&index<2?'high':'auto')+'" decoding="async" alt="'+escapeHTML(m.alt_text||"صورة المنشور")+'">'
-          : '<video class="community-post-media" data-community-media-path="'+escapeHTML(m.storage_path)+'" controls playsinline preload="none"></video>').join("");
-        const publicName=p.is_anonymous?"عضو مجهول":(p.display_name||"عضو في سوريا عقارات");const avatar=p.is_anonymous?"؟":publicName.slice(0,1);return '<article class="community-post" id="community-post-'+p.id+'"><header class="community-post-header"><div class="community-avatar">'+escapeHTML(avatar)+'</div><div><strong>'+escapeHTML(publicName)+'</strong><small>'+communityTypeLabel(p.post_type)+' · '+new Date(p.created_at).toLocaleString("ar",{dateStyle:"medium",timeStyle:"short"})+'</small></div>'+(p.is_pinned?'<span class="community-pinned">📌 مثبت</span>':'')+'<details class="community-post-menu"><summary aria-label="خيارات المنشور" title="خيارات المنشور">⋮</summary><div class="community-post-menu-list"><button type="button" data-community-copy="'+p.id+'">نسخ رابط المنشور</button><button type="button" data-community-report="'+p.id+'">إبلاغ عن المنشور</button>'+(isAdmin?'<button type="button" data-community-admin="pin" data-pinned="'+p.is_pinned+'" data-id="'+p.id+'">'+(p.is_pinned?'إلغاء التثبيت':'تثبيت المنشور')+'</button><button type="button" data-community-admin="hide" data-id="'+p.id+'">إخفاء المنشور</button><button type="button" data-community-admin="delete" data-id="'+p.id+'">حذف المنشور</button>':'')+'</div></details></header><div class="community-post-body">'+escapeHTML(p.body).replace(/\n/g,"<br>")+'</div><div class="community-post-media-grid">'+mediaHTML+'</div><div class="community-post-stats"><span>👍 '+rs.length+' إعجاب</span><span>'+cs.length+' تعليق</span></div><div class="community-post-actions"><button type="button" data-community-like="'+p.id+'" class="'+(mine?'is-active':'')+'">'+(mine?'♥ أعجبني':'♡ إعجاب')+'</button><button type="button" data-community-focus="'+p.id+'">💬 تعليق</button><button type="button" data-community-share="'+p.id+'">↗ مشاركة</button></div><div class="community-comments">'+cs.map(c=>'<div class="community-comment"><strong>'+escapeHTML(c.display_name)+'</strong><p>'+escapeHTML(c.body)+'</p></div>').join("")+'</div><form class="community-comment-form" data-community-comment="'+p.id+'"><input name="body" maxlength="2000" placeholder="'+(currentUser?'اكتب تعليقاً...':'سجّل الدخول للتعليق')+'" '+(currentUser?'required':'disabled')+'><button class="btn btn-outline" type="submit" '+(currentUser?'':'disabled')+'>إرسال</button></form></article>';
+      const posts=postsData||[],ids=posts.map(p=>p.id);
+      // ارسم المنشورات فور وصولها؛ لا تنتظر التعليقات أو الإعجابات أو بيانات الوسائط.
+      feed.innerHTML=posts.map(p=>{
+        const publicName=p.is_anonymous?"عضو مجهول":(p.display_name||"عضو في سوريا عقارات");
+        const avatar=p.is_anonymous?"؟":publicName.slice(0,1);
+        return '<article class="community-post" id="community-post-'+p.id+'"><header class="community-post-header"><div class="community-avatar">'+escapeHTML(avatar)+'</div><div><strong>'+escapeHTML(publicName)+'</strong><small>'+communityTypeLabel(p.post_type)+' · '+new Date(p.created_at).toLocaleString("ar",{dateStyle:"medium",timeStyle:"short"})+'</small></div>'+(p.is_pinned?'<span class="community-pinned">📌 مثبت</span>':'')+'<details class="community-post-menu"><summary aria-label="خيارات المنشور" title="خيارات المنشور">⋮</summary><div class="community-post-menu-list"><button type="button" data-community-copy="'+p.id+'">نسخ رابط المنشور</button><button type="button" data-community-report="'+p.id+'">إبلاغ عن المنشور</button>'+(isAdmin?'<button type="button" data-community-admin="pin" data-pinned="'+p.is_pinned+'" data-id="'+p.id+'">'+(p.is_pinned?'إلغاء التثبيت':'تثبيت المنشور')+'</button><button type="button" data-community-admin="hide" data-id="'+p.id+'">إخفاء المنشور</button><button type="button" data-community-admin="delete" data-id="'+p.id+'">حذف المنشور</button>':'')+'</div></details></header><div class="community-post-body">'+escapeHTML(p.body).replace(/\n/g,"<br>")+'</div><div class="community-post-media-grid" data-community-media-for="'+p.id+'"></div><div class="community-post-stats"><span data-community-likes-count="'+p.id+'">👍 — إعجاب</span><span data-community-comments-count="'+p.id+'">— تعليق</span></div><div class="community-post-actions"><button type="button" data-community-like="'+p.id+'">♡ إعجاب</button><button type="button" data-community-focus="'+p.id+'">💬 تعليق</button><button type="button" data-community-share="'+p.id+'">↗ مشاركة</button></div><div class="community-comments" data-community-comments-for="'+p.id+'"></div><form class="community-comment-form" data-community-comment="'+p.id+'"><input name="body" maxlength="2000" placeholder="'+(currentUser?'اكتب تعليقاً...':'سجّل الدخول للتعليق')+'" '+(currentUser?'required':'disabled')+'><button class="btn btn-outline" type="submit" '+(currentUser?'':'disabled')+'>إرسال</button></form></article>';
       }).join("");
-      if(mediaPaths.length){
-        getSignedMediaMap(db,STORAGE_BUCKET,mediaPaths,604800).then(signedMedia=>{
-          feed.querySelectorAll("[data-community-media-path]").forEach(node=>{
-            const url=signedMedia.get(node.dataset.communityMediaPath);
-            if(!url)return;
-            if(node.tagName==="IMG"){node.src=url;node.addEventListener("error",()=>{node.classList.add("media-load-error");},{once:true});}
-            else node.src=url;
-          });
-        }).catch(error=>console.warn("تعذر تحميل وسائط المنشورات:",error));
-      }
-      if(!hasCommunityPosts) feed.innerHTML='<div class="empty-state"><h3>مرحباً بك في مجموعة عقارات سوريا</h3><p>لا توجد منشورات اجتماعية معتمدة بعد. هذه أحدث الإعلانات العقارية المنشورة:</p></div>';
-      // نحافظ على عقدة الإعلانات الأصلية خارج إعادة بناء HTML حتى لا تضيع عند تحديث الموجز.
+      if(!posts.length)feed.innerHTML='<div class="empty-state"><h3>مرحباً بك في مجموعة عقارات سوريا</h3><p>لا توجد منشورات اجتماعية معتمدة بعد. هذه أحدث الإعلانات العقارية المنشورة:</p></div>';
       if(propertyGridNode){
         let listingsWrap=feed.querySelector(".community-approved-listings");
         if(!listingsWrap){listingsWrap=document.createElement("section");listingsWrap.className="community-approved-listings";listingsWrap.innerHTML='<h3 class="community-feed-subheading">منشورات وإعلانات عقارية</h3>';}
-        listingsWrap.appendChild(propertyGridNode);
-        feed.appendChild(listingsWrap);
+        listingsWrap.appendChild(propertyGridNode);feed.appendChild(listingsWrap);
+      }
+      if(!ids.length)return;
+      // تُحمّل التفاصيل الثانوية بالتوازي، ولا تؤخر ظهور نص المنشورات.
+      const jobs=[
+        db.from("community_post_comments").select("id,post_id,display_name,body,created_at").in("post_id",ids).order("created_at",{ascending:true}),
+        db.from("community_post_reactions").select("post_id,reaction").in("post_id",ids),
+        db.from("community_post_media").select("post_id,media_type,storage_path,alt_text,sort_order").in("post_id",ids).order("sort_order",{ascending:true}),
+        currentUser?db.from("community_post_reactions").select("post_id").eq("user_id",currentUser.id).in("post_id",ids):Promise.resolve({data:[]})
+      ];
+      const [cr,rr,mr,myReactionResult]=await Promise.all(jobs);
+      if(requestId!==communityFeedRequest||!feed.isConnected)return;
+      const cb=new Map(),rb=new Map(),mb=new Map();
+      (cr.data||[]).forEach(c=>{if(!cb.has(c.post_id))cb.set(c.post_id,[]);cb.get(c.post_id).push(c);});
+      (rr.data||[]).forEach(r=>{if(!rb.has(r.post_id))rb.set(r.post_id,[]);rb.get(r.post_id).push(r);});
+      (mr.data||[]).forEach(m=>{if(!mb.has(m.post_id))mb.set(m.post_id,[]);mb.get(m.post_id).push(m);});
+      const myReacted=new Set((myReactionResult.data||[]).map(x=>x.post_id));
+      posts.forEach(p=>{
+        const comments=cb.get(p.id)||[],reactions=rb.get(p.id)||[];
+        const stats=feed.querySelector('[data-community-likes-count="'+p.id+'"]');
+        const commentStats=feed.querySelector('[data-community-comments-count="'+p.id+'"]');
+        const commentBox=feed.querySelector('[data-community-comments-for="'+p.id+'"]');
+        const likeButton=feed.querySelector('[data-community-like="'+p.id+'"]');
+        if(stats)stats.textContent="👍 "+reactions.length+" إعجاب";
+        if(commentStats)commentStats.textContent=comments.length+" تعليق";
+        if(likeButton){const mine=!!currentUser&&myReacted.has(p.id);likeButton.classList.toggle("is-active",mine);likeButton.textContent=mine?"♥ أعجبني":"♡ إعجاب";}
+        if(commentBox)commentBox.innerHTML=comments.map(c=>'<div class="community-comment"><strong>'+escapeHTML(c.display_name)+'</strong><p>'+escapeHTML(c.body)+'</p></div>').join("");
+      });
+      const mediaRows=mr.data||[],mediaPaths=mediaRows.map(m=>m.storage_path).filter(Boolean);
+      if(mediaPaths.length){
+        try{
+          const signedMedia=await getSignedMediaMap(db,STORAGE_BUCKET,mediaPaths,604800);
+          if(requestId!==communityFeedRequest||!feed.isConnected)return;
+          posts.forEach((p,postIndex)=>{
+            const box=feed.querySelector('[data-community-media-for="'+p.id+'"]');
+            if(!box)return;
+            const rows=mb.get(p.id)||[];
+            box.innerHTML=rows.map((m,index)=>{
+              const url=signedMedia.get(m.storage_path);if(!url)return "";
+              return m.media_type==="image"
+                ? '<img class="community-post-media" loading="'+(postIndex===0&&index<2?'eager':'lazy')+'" fetchpriority="'+(postIndex===0&&index<2?'high':'auto')+'" decoding="async" src="'+escapeHTML(url)+'" alt="'+escapeHTML(m.alt_text||"صورة المنشور")+'">'
+                : '<video class="community-post-media" controls playsinline preload="none" src="'+escapeHTML(url)+'"></video>';
+            }).join("");
+          });
+        }catch(error){console.warn("تعذر تحميل وسائط المنشورات:",error);}
       }
     }
     async function loadCommunityAdmin(){
