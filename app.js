@@ -454,7 +454,7 @@
                 ${priority ? 'fetchpriority="high"' : ""}></a>`;
           }
           if (item.media_type === "video") {
-            return `<div class="property-media-item"><video src="${escapeHTML(url)}" data-track-video="${escapeHTML(item.id)}" controls playsinline preload="none"></video><a class="text-link" href="${escapeHTML(url)}" target="_blank" rel="noopener">إذا لم يعمل تشغيل الفيديو، افتحه هنا</a></div>`;
+            return `<div class="property-media-item"><video src="${escapeHTML(url)}" data-track-video="${escapeHTML(item.id)}" controls playsinline preload="metadata"></video><a class="text-link" href="${escapeHTML(url)}" target="_blank" rel="noopener">إذا لم يعمل تشغيل الفيديو، افتحه هنا</a></div>`;
           }
           return "";
         });
@@ -1154,6 +1154,22 @@
     async function uploadCommunityPostFiles(postId,userId,files){if(files.length>8)throw new Error("يمكن إرفاق 8 ملفات كحد أقصى.");for(let i=0;i<files.length;i++){const original=files[i],detected=detectMediaFile(original),file=detected.isImage?await prepareImageForUpload(detected.file):detected.file;if(file.size>MAX_FILE_SIZE)throw new Error("حجم الملف "+file.name+" يتجاوز 50 ميغابايت.");const ext=(file.name.split(".").pop()||"bin").toLowerCase().replace(/[^a-z0-9]/g,"")||"bin";const path="community/"+postId+"/"+userId+"/"+crypto.randomUUID()+"."+ext;const up=await db.storage.from(STORAGE_BUCKET).upload(path,file,{cacheControl:"31536000",upsert:false,contentType:detected.mime});if(up.error)throw new Error("تعذر رفع "+file.name+": "+up.error.message);const linked=await db.rpc("community_user_add_media",{p_post_id:postId,p_storage_path:path,p_media_type:detected.isImage?"image":"video",p_alt_text:original.name,p_sort_order:i});if(linked.error)throw new Error("تم رفع الملف لكن تعذر ربطه بالمنشور: "+linked.error.message);}}
     document.querySelectorAll("[data-group-page]").forEach(link=>link.addEventListener("click",ev=>{ev.preventDefault();const targetId=link.getAttribute("data-group-page"),target=$(targetId);if(!target)return;["saved-listings","ai-assistant","add-property","my-listings"].forEach(id=>{const section=$(id);if(section)section.hidden=id!==targetId;});link.closest("details")?.removeAttribute("open");target.hidden=false;target.scrollIntoView({behavior:"smooth",block:"start"});if(targetId==="saved-listings")renderSavedListings();}));
     $("communityPostForm")?.addEventListener("submit",async ev=>{ev.preventDefault();const body=$("communityPostBody").value.trim(),type=$("communityPostType").value,isAnonymous=!!$("communityAnonymous")?.checked,files=Array.from($("communityPostFiles")?.files||[]),b=ev.submitter;if(!currentUser){setMessage("communityPostMessage","سجّل الدخول بحسابك أولاً حتى تتمكن من النشر.",true);$("login")?.scrollIntoView({behavior:"smooth"});return;}if(!body)return;if(files.length>8){setMessage("communityPostMessage","يمكن إرفاق 8 ملفات كحد أقصى.",true);return;}if(b)b.disabled=true;setMessage("communityPostMessage","جارٍ إرسال منشورك للمراجعة...");try{const {data,error}=await db.rpc("community_create_user_post",{p_body:body,p_post_type:type,p_is_anonymous:isAnonymous});if(error)throw error;if(files.length){setMessage("communityPostMessage","تم حفظ المنشور. جارٍ رفع الصور والفيديو...");await uploadCommunityPostFiles(data,currentUser.id,files);} $("communityPostBody").value="";$("communityPostFiles").value="";setMessage("communityPostMessage","وصل منشورك"+(files.length?" مع الوسائط":"")+" بنجاح! سيظهر للجميع بعد موافقة الإدارة.");}catch(e){setMessage("communityPostMessage","تعذر إكمال النشر: "+e.message+"؛ قد يكون نص المنشور محفوظاً بانتظار المراجعة.",true);}finally{if(b)b.disabled=false;}});
+    // تبويبا المجموعة: عند الدخول تظهر المنشورات، والنشر يفتح عند اختياره فقط.
+    function showCommunityTab(name){
+      const posts=name==="posts";
+      const postsPanel=$("communityPostsPanel"),publishPanel=$("communityPublishPanel");
+      if(postsPanel)postsPanel.hidden=!posts;
+      if(publishPanel)publishPanel.hidden=posts;
+      document.querySelectorAll("[data-community-view]").forEach(button=>{
+        const active=button.dataset.communityView===name;
+        button.classList.toggle("active",active);
+        button.setAttribute("aria-selected",active?"true":"false");
+      });
+    }
+    document.querySelectorAll("[data-community-view]").forEach(button=>button.addEventListener("click",()=>{
+      showCommunityTab(button.dataset.communityView);
+    }));
+    showCommunityTab("posts");
     $("communityRefreshButton")?.addEventListener("click",loadCommunityFeed);
     // مزامنة بطاقة المتابعة الجانبية مع زر المتابعة الأصلي دون تكرار العدّاد.
     const syncPortalFollow=()=>{const count=$("platformFollowerCount")?.textContent||"—";const target=$("portalFollowerMirror");if(target)target.textContent=count.replace(/[^0-9٠-٩٬,]/g,"")||"—";};
