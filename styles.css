@@ -1440,3 +1440,42 @@ input,select,textarea { border-radius:10px; }
   .brand small { font-size:.72rem; }
   .community-feed-tools { align-items:flex-start; }
 }
+
+
+/* واجهة مجموعة اجتماعية بسيطة: إخفاء البوابات القديمة دون حذف وظائفها أو بياناتها */
+#platformFollowBar,.immersive-3d-intro,.portal-sidebar,
+.portal-main-column>.search-section,#properties,#saved-listings,
+#ai-assistant,#add-property,#my-listings { display:none!important; }
+.portal-layout{display:block!important;width:min(860px,96%)!important;margin:14px auto 36px!important}
+.portal-main-column{width:100%;min-width:0}
+.portal-main-column>.community-section{display:block!important;max-width:none!important;margin:0!important;padding:18px!important}
+#admin-panel[hidden]{display:none!important}
+#admin-panel:not([hidden]){display:block!important;max-width:860px;margin:24px auto;padding:18px}
+.site-header{position:sticky;top:0;z-index:50;box-shadow:0 3px 16px rgba(0,0,0,.07)}
+.site-header .brand small{font-size:.72rem}
+.community-heading{text-align:right}
+.community-heading h2{font-size:1.5rem}
+.community-composer{background:#fff;border:1px solid #e5ebe7;box-shadow:0 3px 14px rgba(20,50,35,.05)}
+.community-composer textarea{min-height:78px}
+.community-anonymous-row{display:grid;gap:5px;padding:10px 12px;background:#f7f9f7;border:1px solid #e7ece8;border-radius:10px}
+.community-anonymous-row label{display:flex;align-items:center;gap:9px;font-weight:800;color:#294d3d}
+.community-anonymous-row input{width:18px;height:18px;accent-color:#1c5a48}
+.community-anonymous-row small{color:#718078;font-size:.78rem}
+.community-post{background:#fff;border:1px solid #e7ece8;border-radius:14px;box-shadow:0 3px 12px rgba(25,55,42,.04);overflow:hidden}
+.community-post-header{min-height:66px}
+.community-post-header>div:nth-child(2){flex:1}
+.community-post-body{font-size:1rem;line-height:1.9;padding:12px 17px 18px}
+.community-post-actions button{min-height:44px;font-size:.9rem}
+.community-comment-form input{flex:1;max-width:none!important}
+@media(max-width:650px){
+ .site-header{padding:8px 10px;gap:8px}
+ .main-nav{gap:7px}
+ .main-nav a{font-size:.8rem;padding:7px 8px}
+ .header-actions .btn-primary{font-size:.78rem;padding:8px}
+ .portal-layout{width:100%!important;margin:8px auto 24px!important}
+ .portal-main-column>.community-section{padding:12px!important}
+ .community-heading h2{font-size:1.25rem}
+ .community-composer{padding:10px}
+ .community-post-header{padding:12px}
+ .community-post-actions button{font-size:.8rem}
+}
